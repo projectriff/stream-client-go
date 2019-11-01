@@ -7,7 +7,7 @@ endif
 
 .PHONY: compile
 compile: fmt vet pkg/serialization/riff-serialization.pb.go pkg/liiklus/LiiklusService.pb.go ## Compile target binaries
-	go build ./pkg/
+	go build .
 
 pkg/serialization/riff-serialization.pb.go: riff-serialization.proto
 	protoc -I . riff-serialization.proto --go_out=plugins=grpc:serialization
