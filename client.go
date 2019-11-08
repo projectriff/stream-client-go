@@ -110,6 +110,61 @@ func chopContentType(contentType string) string {
 	return strings.Split(contentType, ";")[0]
 }
 
+func (lc *StreamClient) Subscribe(ctx context.Context, group string, f func(ctx context.Context, payload []byte, contentType string) error) error {
+	request := liiklus.SubscribeRequest{
+		Topic:                lc.TopicName,
+		Group:                group,
+		AutoOffsetReset:      liiklus.SubscribeRequest_EARLIEST,
+	}
+	subscribedClient, err := lc.client.Subscribe(ctx, &request)
+	if err != nil {
+		return err
+	}
+
+	subscribeReply, err := subscribedClient.Recv()
+	if err != nil {
+		return err
+	}
+
+	receiveRequest := liiklus.ReceiveRequest{
+		Assignment:           subscribeReply.GetAssignment(),
+		LastKnownOffset:      0,
+	}
+	receiveClient, err := lc.client.Receive(context.Background(), &receiveRequest)
+	if err != nil {
+		return err
+	}
+	for true {
+		recvReply, err := receiveClient.Recv()
+		if err != nil {
+			return err
+		}
+
+		m := serialization.Message{}
+
+		record := recvReply.GetRecord()
+		err = proto.Unmarshal(record.Value, &m)
+		if err != nil {
+			return err
+		}
+		err = f(ctx, m.GetPayload(), m.ContentType)
+		if err != nil {
+			return err
+		}
+		ackRequest := liiklus.AckRequest{
+			Topic:                lc.TopicName,
+			Group:                group,
+			Offset:               record.Offset,
+		}
+		_, err = lc.client.Ack(ctx, &ackRequest)
+		if err != nil {
+			return err
+		}
+	}
+
+	return err
+}
+
 // Close cleans up underlying resources used by this client. The client is then unable to publish.
 func (lc *StreamClient) Close() error {
 	return lc.conn.Close()
