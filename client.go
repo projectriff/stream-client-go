@@ -50,6 +50,9 @@ type PublishResult struct {
 	Offset    uint64
 }
 
+type Subscriber = func(ctx context.Context, payload []byte, contentType string) error
+type SubscribeErrHandler = func(cancel context.CancelFunc, err error)
+
 // NewStreamClient creates a new StreamClient for a given stream.
 func NewStreamClient(gateway string, topic string, acceptableContentType string) (*StreamClient, error) {
 	timeout, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
@@ -110,7 +113,7 @@ func chopContentType(contentType string) string {
 	return strings.Split(contentType, ";")[0]
 }
 
-func (lc *StreamClient) Subscribe(ctx context.Context, group string, f func(ctx context.Context, payload []byte, contentType string) error) error {
+func (lc *StreamClient) Subscribe(ctx context.Context, group string, f Subscriber, e SubscribeErrHandler) (context.CancelFunc, error) {
 	request := liiklus.SubscribeRequest{
 		Topic:                lc.TopicName,
 		Group:                group,
@@ -118,51 +121,59 @@ func (lc *StreamClient) Subscribe(ctx context.Context, group string, f func(ctx 
 	}
 	subscribedClient, err := lc.client.Subscribe(ctx, &request)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	subscribeReply, err := subscribedClient.Recv()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	receiveRequest := liiklus.ReceiveRequest{
 		Assignment:           subscribeReply.GetAssignment(),
 		LastKnownOffset:      0,
 	}
-	receiveClient, err := lc.client.Receive(context.Background(), &receiveRequest)
+	receiveClient, err := lc.client.Receive(ctx, &receiveRequest)
 	if err != nil {
-		return err
-	}
-	for true {
-		recvReply, err := receiveClient.Recv()
-		if err != nil {
-			return err
-		}
-
-		m := serialization.Message{}
-
-		record := recvReply.GetRecord()
-		err = proto.Unmarshal(record.Value, &m)
-		if err != nil {
-			return err
-		}
-		err = f(ctx, m.GetPayload(), m.ContentType)
-		if err != nil {
-			return err
-		}
-		ackRequest := liiklus.AckRequest{
-			Topic:                lc.TopicName,
-			Group:                group,
-			Offset:               record.Offset,
-		}
-		_, err = lc.client.Ack(ctx, &ackRequest)
-		if err != nil {
-			return err
-		}
+		return nil, err
 	}
 
-	return err
+	subContext, cancel := context.WithCancel(ctx)
+	go func() {
+		for true {
+			recvReply, err := receiveClient.Recv()
+			if err != nil {
+				e(cancel, err)
+				return
+			}
+
+			m := serialization.Message{}
+
+			record := recvReply.GetRecord()
+			err = proto.Unmarshal(record.Value, &m)
+			if err != nil {
+				e(cancel, err)
+				return
+			}
+			err = f(subContext, m.GetPayload(), m.ContentType)
+			if err != nil {
+				e(cancel, err)
+				return
+			}
+			ackRequest := liiklus.AckRequest{
+				Topic:                lc.TopicName,
+				Group:                group,
+				Offset:               record.Offset,
+			}
+			_, err = lc.client.Ack(ctx, &ackRequest)
+			if err != nil {
+				e(cancel, err)
+				return
+			}
+		}
+	}()
+
+	return cancel, nil
 }
 
 // Close cleans up underlying resources used by this client. The client is then unable to publish.
