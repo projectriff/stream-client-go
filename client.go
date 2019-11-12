@@ -151,10 +151,9 @@ func (lc *StreamClient) Subscribe(ctx context.Context, group string, offset uint
 	}
 
 	go func() {
-		for true {
+		for {
 			select {
 			case <- subContext.Done():
-				fmt.Println("terminating EventHandler")
 				e(cancel, errors.New("context cancelled"))
 				return
 			default:
