@@ -28,5 +28,5 @@ helm repo update
 helm install --name my-kafka incubator/kafka --set replicas=1,zookeeper.replicaCount=1,zookeeper.env.ZK_HEAP_SIZE=128m --namespace $NAMESPACE --wait
 
 riff streaming kafka-provider create franz --bootstrap-servers my-kafka:9092 --namespace $NAMESPACE
-kubectl wait --for=condition=Ready "pod/$(kubectl -n $NAMESPACE get pod -lstreaming.projectriff.io/kafka-provider-liiklus -otemplate --template="{{(index .items 0).metadata.name}}")" -n $NAMESPACE
-kubectl -n $NAMESPACE port-forward "svc/$(kubectl -n $NAMESPACE get svc -lstreaming.projectriff.io/kafka-provider-liiklus -otemplate --template="{{(index .items 0).metadata.name}}")" "6565:6565" &
+kubectl wait --for=condition=Ready "pod/$(kubectl -n $NAMESPACE get pod -lstreaming.projectriff.io/kafka-provider-gateway -otemplate --template="{{(index .items 0).metadata.name}}")" -n $NAMESPACE
+kubectl -n $NAMESPACE port-forward "svc/$(kubectl -n $NAMESPACE get svc -lstreaming.projectriff.io/kafka-provider-gateway -otemplate --template="{{(index .items 0).metadata.name}}")" "6565:6565" &
