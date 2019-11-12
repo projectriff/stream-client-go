@@ -120,7 +120,7 @@ func chopContentType(contentType string) string {
 	return strings.Split(contentType, ";")[0]
 }
 
-// Subscribe function subscribes for events form the StreamClient TopicName after the given offset. An offset of zero should be
+// Subscribe function should be used to listen for events form the StreamClient TopicName after the given offset. An offset of zero should be
 // provided to read from the beginning. The provided EventHandler function will be called for each value.
 // To deal with errors while reading messages, an error handler function should also be provided.
 //
