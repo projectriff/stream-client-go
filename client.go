@@ -155,7 +155,7 @@ func (lc *StreamClient) Subscribe(ctx context.Context, group string, offset uint
 		for {
 			select {
 			case <- subContext.Done():
-				e(cancel, errors.New("context cancelled"))
+				e(cancel, errors.New("context terminated"))
 				return
 			default:
 			}
