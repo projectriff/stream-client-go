@@ -3,6 +3,7 @@ package client_test
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -18,8 +19,10 @@ func TestSimplePublishSubscribe(t *testing.T) {
 
 	c := setupStreamingClient(topic, t)
 
-	publish(c, "FOO", "text/plain", topic, t)
-	subscribe(c, "FOO", topic, 0, t)
+	payload := "FOO"
+	headers := map[string]string{"H1":"V1", "H2":"V2"}
+	publish(c, payload, "text/plain", topic, headers, t)
+	subscribe(c, payload, topic, 0, headers, t)
 }
 
 func setupStreamingClient(topic string, t *testing.T) *client.StreamClient {
@@ -30,8 +33,7 @@ func setupStreamingClient(topic string, t *testing.T) *client.StreamClient {
 	return c
 }
 
-func publish(c *client.StreamClient, value, contentType, topic string, t *testing.T) {
-	headers := make(map[string]string)
+func publish(c *client.StreamClient, value, contentType, topic string, headers map[string]string, t *testing.T) {
 	reader := strings.NewReader(value)
 	publishResult, err := c.Publish(context.Background(), reader, nil, contentType, headers)
 	if err != nil {
@@ -40,7 +42,7 @@ func publish(c *client.StreamClient, value, contentType, topic string, t *testin
 	fmt.Printf("Published: %+v\n", publishResult)
 }
 
-func subscribe(c *client.StreamClient, expectedValue, topic string, offset uint64, t *testing.T) {
+func subscribe(c *client.StreamClient, expectedValue, topic string, offset uint64, headers map[string]string, t *testing.T) {
 
 	var errHandler client.EventErrHandler
 	errHandler = func(cancel context.CancelFunc, err error) {
@@ -48,11 +50,13 @@ func subscribe(c *client.StreamClient, expectedValue, topic string, offset uint6
 		cancel()
 	}
 
-	result := make(chan string)
+	payloadChan := make(chan string)
+	headersChan := make(chan map[string]string)
 
 	var eventHandler client.EventHandler
-	eventHandler = func(ctx context.Context, payload []byte, contentType string) error {
-		result <- string(payload)
+	eventHandler = func(ctx context.Context, payload []byte, contentType string, headers map[string]string) error {
+		payloadChan <- string(payload)
+		headersChan <- headers
 		return nil
 	}
 
@@ -60,9 +64,13 @@ func subscribe(c *client.StreamClient, expectedValue, topic string, offset uint6
 	if err != nil {
 		t.Error(err)
 	}
-	v1 := <- result
+	v1 := <-payloadChan
 	if v1 != expectedValue {
 		t.Errorf("expected value: %s, but was: %s", expectedValue, v1)
+	}
+	h := <- headersChan
+	if !reflect.DeepEqual(headers, h) {
+		t.Errorf("headers not equal. expected %s, but was: %s", headers, h)
 	}
 }
 
@@ -79,7 +87,7 @@ func TestSubscribeBeforePublish(t *testing.T) {
 	result := make(chan string)
 
 	var eventHandler client.EventHandler
-	eventHandler = func(ctx context.Context, payload []byte, contentType string) error {
+	eventHandler = func(ctx context.Context, payload []byte, contentType string, headers map[string]string) error {
 		result <- string(payload)
 		return nil
 	}
@@ -91,7 +99,7 @@ func TestSubscribeBeforePublish(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	publish(c, testVal, "text/plain", topic, t)
+	publish(c, testVal, "text/plain", topic, nil, t)
 	v1 := <- result
 	if v1 != testVal {
 		t.Errorf("expected value: %s, but was: %s", testVal, v1)
@@ -111,7 +119,7 @@ func TestSubscribeCancel(t *testing.T) {
 	result := make(chan string)
 
 	var eventHandler client.EventHandler
-	eventHandler = func(ctx context.Context, payload []byte, contentType string) error {
+	eventHandler = func(ctx context.Context, payload []byte, contentType string, headers map[string]string) error {
 		result <- string(payload)
 		return nil
 	}

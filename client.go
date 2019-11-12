@@ -53,7 +53,7 @@ type PublishResult struct {
 
 // EventHandler is a function to process the messages read from the stream and is passed as
 // a parameter to the subscribe call.
-type EventHandler = func(ctx context.Context, payload []byte, contentType string) error
+type EventHandler = func(ctx context.Context, payload []byte, contentType string, headers map[string]string) error
 
 // EventErrHandler is a function to handle errors while reading subscription messages and
 // is passed as a parameter to the subscribe call.
@@ -88,6 +88,7 @@ func (lc *StreamClient) Publish(ctx context.Context, payload io.Reader, key io.R
 	} else {
 		m.Payload = bytes
 	}
+	m.Headers = map[string]string{}
 	for k, v := range headers {
 		m.Headers[k] = v
 	}
@@ -172,7 +173,7 @@ func (lc *StreamClient) Subscribe(ctx context.Context, group string, offset uint
 				e(cancel, err)
 				return
 			}
-			err = f(subContext, m.GetPayload(), m.ContentType)
+			err = f(subContext, m.GetPayload(), m.GetContentType(), m.GetHeaders())
 			if err != nil {
 				e(cancel, err)
 				return
