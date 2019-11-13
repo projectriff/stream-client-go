@@ -57,6 +57,7 @@ type EventHandler = func(ctx context.Context, payload []byte, contentType string
 
 // EventErrHandler is a function to handle errors while reading subscription messages and
 // is passed as a parameter to the subscribe call.
+// This function may call the passed CancelFunc parameter to cancel the subscription
 type EventErrHandler = func(cancel context.CancelFunc, err error)
 
 // NewStreamClient creates a new StreamClient for a given stream.
