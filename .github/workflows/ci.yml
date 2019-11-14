@@ -69,3 +69,8 @@ jobs:
         run: .github/workflows/setup-cluster.sh
       - name: 'run integration test'
         run: go test ./...
+      - name: Collect diagnostics
+        run: ${FATS_DIR}/diagnostics.sh
+        shell: bash
+        if: always()
+        timeout-minutes: 1
