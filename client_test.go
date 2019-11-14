@@ -3,6 +3,8 @@ package client_test
 import (
 	"context"
 	"fmt"
+	"io"
+	"io/ioutil"
 	"reflect"
 	"strings"
 	"testing"
@@ -54,8 +56,12 @@ func subscribe(c *client.StreamClient, expectedValue, topic string, offset uint6
 	headersChan := make(chan map[string]string)
 
 	var eventHandler client.EventHandler
-	eventHandler = func(ctx context.Context, payload []byte, contentType string, headers map[string]string) error {
-		payloadChan <- string(payload)
+	eventHandler = func(ctx context.Context, payload io.Reader, contentType string, headers map[string]string) error {
+		bytes, err := ioutil.ReadAll(payload)
+		if err != nil {
+			return err
+		}
+		payloadChan <- string(bytes)
 		headersChan <- headers
 		return nil
 	}
@@ -87,8 +93,12 @@ func TestSubscribeBeforePublish(t *testing.T) {
 	result := make(chan string)
 
 	var eventHandler client.EventHandler
-	eventHandler = func(ctx context.Context, payload []byte, contentType string, headers map[string]string) error {
-		result <- string(payload)
+	eventHandler = func(ctx context.Context, payload io.Reader, contentType string, headers map[string]string) error {
+		bytes, err := ioutil.ReadAll(payload)
+		if err != nil {
+			return err
+		}
+		result <- string(bytes)
 		return nil
 	}
 	var eventErrHandler client.EventErrHandler
@@ -119,8 +129,12 @@ func TestSubscribeCancel(t *testing.T) {
 	result := make(chan string)
 
 	var eventHandler client.EventHandler
-	eventHandler = func(ctx context.Context, payload []byte, contentType string, headers map[string]string) error {
-		result <- string(payload)
+	eventHandler = func(ctx context.Context, payload io.Reader, contentType string, headers map[string]string) error {
+		bytes, err := ioutil.ReadAll(payload)
+		if err != nil {
+			return err
+		}
+		result <- string(bytes)
 		return nil
 	}
 	var eventErrHandler client.EventErrHandler
