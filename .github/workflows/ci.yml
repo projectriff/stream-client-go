@@ -7,6 +7,11 @@ on:
     - '!dependabot/**'
   pull_request: {}
 
+env:
+  FATS_DIR: fats
+  FATS_REPO: projectriff/fats
+  FATS_REFSPEC: 1728e95a256987f7ccc0dde2f66fa0298d1c122c # master as of 2019-11-07
+
 jobs:
 
   unit:
@@ -32,4 +37,40 @@ jobs:
       shell: bash
     - name: Build
       run: make
-      
+
+  integration:
+    name: Integration testing
+    needs: unit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-go@v1
+        with:
+          go-version: '1.13'
+      - name: 'Fetch FATS'
+        run: .github/workflows/fats-fetch.sh ${FATS_DIR} ${FATS_REFSPEC} ${FATS_REPO}
+        timeout-minutes: 1
+      - name: 'Install tools'
+        run: |
+          ${FATS_DIR}/install.sh kubectl
+          ${FATS_DIR}/install.sh kind
+          ${FATS_DIR}/install.sh helm
+          ${FATS_DIR}/install.sh riff
+        timeout-minutes: 5
+      - name: 'setup env'
+        run: |
+          job=$(date +%s) # TODO can use something that is assigned by CI to guarantee uniqueness
+          echo "JOB_ID=${job}"
+          echo "##[set-env name=CLUSTER]kind"
+          echo "##[set-env name=REGISTRY]docker-daemon"
+          echo "##[set-env name=CLUSTER_NAME]fats-${job}-kind"
+          echo "##[set-env name=NAMESPACE]stream-client-${job}-kind"
+      - name: 'setup cluster'
+        run: .github/workflows/setup-cluster.sh
+      - name: 'run integration test'
+        run: go test ./...
+      - name: Collect diagnostics
+        run: ${FATS_DIR}/diagnostics.sh
+        shell: bash
+        if: always()
+        timeout-minutes: 1
