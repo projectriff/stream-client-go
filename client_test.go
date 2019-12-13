@@ -151,3 +151,56 @@ func TestSubscribeCancel(t *testing.T) {
 		t.Errorf("expected value: %s, but was: %s", expectedError, v1)
 	}
 }
+
+func TestMultipleSubscribe(t *testing.T) {
+	now := time.Now()
+	topic1 := fmt.Sprintf("test1_%s%d%d%d", t.Name(), now.Hour(), now.Minute(), now.Second())
+	topic2 := fmt.Sprintf("test2_%s%d%d%d", t.Name(), now.Hour(), now.Minute(), now.Second())
+
+	c1 := setupStreamingClient(topic1, t)
+	c2 := setupStreamingClient(topic2, t)
+
+	testVal1 := "BAR1"
+	testVal2 := "BAR2"
+	result1 := make(chan string)
+	result2 := make(chan string)
+
+	var eventErrHandler client.EventErrHandler
+	eventErrHandler = func(cancel context.CancelFunc, err error) {
+		panic(err)
+	}
+	var err error
+	_, err = c1.Subscribe(context.Background(), t.Name()+"1", 0, func(ctx context.Context, payload io.Reader, contentType string, headers map[string]string) error {
+		bytes, err := ioutil.ReadAll(payload)
+		if err != nil {
+			return err
+		}
+		result1 <- string(bytes)
+		return nil
+	}, eventErrHandler)
+	if err != nil {
+		t.Error(err)
+	}
+	_, err = c2.Subscribe(context.Background(), t.Name()+"2", 0, func(ctx context.Context, payload io.Reader, contentType string, headers map[string]string) error {
+		bytes, err := ioutil.ReadAll(payload)
+		if err != nil {
+			return err
+		}
+		result2 <- string(bytes)
+		return nil
+	}, eventErrHandler)
+	if err != nil {
+		t.Error(err)
+	}
+	publish(c1, testVal1, "text/plain", topic1, nil, t)
+	publish(c2, testVal2, "text/plain", topic1, nil, t)
+
+	v1 := <-result1
+	if v1 != testVal1 {
+		t.Errorf("expected value: %s, but was: %s", testVal1, v1)
+	}
+	v2 := <-result2
+	if v2 != testVal2 {
+		t.Errorf("expected value: %s, but was: %s", testVal2, v2)
+	}
+}
