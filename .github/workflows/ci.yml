@@ -56,6 +56,7 @@ jobs:
           ${FATS_DIR}/install.sh kind
           ${FATS_DIR}/install.sh helm
           ${FATS_DIR}/install.sh riff
+          ${FATS_DIR}/install.sh kapp
         timeout-minutes: 5
       - name: 'setup env'
         run: |
@@ -71,6 +72,11 @@ jobs:
         run: go test ./...
       - name: Collect diagnostics
         run: ${FATS_DIR}/diagnostics.sh
+        shell: bash
+        if: always()
+        timeout-minutes: 1
+      - name: Cleanup cluster
+        run: kind delete cluster --name=$CLUSTER_NAME
         shell: bash
         if: always()
         timeout-minutes: 1
