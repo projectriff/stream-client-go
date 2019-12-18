@@ -76,7 +76,7 @@ jobs:
         if: always()
         timeout-minutes: 1
       - name: Cleanup cluster
-        run: kind delete cluster --name=$CLUSTER_NAME
+        run: kind get clusters | xargs kind delete cluster --name=
         shell: bash
         if: always()
         timeout-minutes: 1
