@@ -6,27 +6,27 @@ set -o pipefail
 
 source ${FATS_DIR}/start.sh
 
-source ${FATS_DIR}/macros/helm-init.sh
+readonly riff_version=0.5.0-snapshot
 
-helm repo add projectriff https://projectriff.storage.googleapis.com/charts/releases
-helm repo update
-helm install projectriff/cert-manager --name cert-manager --devel --wait
-sleep 5
-wait_pod_selector_ready app=cert-manager cert-manager
-wait_pod_selector_ready app=webhook cert-manager
+source ${FATS_DIR}/.configure.sh
+kubectl create ns apps
+kubectl create ns $NAMESPACE
 
-source ${FATS_DIR}/macros/no-resource-requests.sh
+echo "install cert manager"
+fats_retry kapp deploy -y -n apps -a cert-manager -f https://storage.googleapis.com/projectriff/charts/uncharted/${riff_version}/cert-manager.yaml
 
-helm install projectriff/riff --name riff --devel --wait \
-  --set cert-manager.enabled=false \
-  --set tags.core-runtime=false \
-  --set tags.knative-runtime=false \
-  --set tags.streaming-runtime=true
+echo "install riff build"
+kapp deploy -y -n apps -a kpack -f https://storage.googleapis.com/projectriff/charts/uncharted/${riff_version}/kpack.yaml
+kapp deploy -y -n apps -a riff-builders -f https://storage.googleapis.com/projectriff/charts/uncharted/${riff_version}/riff-builders.yaml
+kapp deploy -y -n apps -a riff-build -f https://storage.googleapis.com/projectriff/charts/uncharted/${riff_version}/riff-build.yaml
 
-helm repo add incubator http://storage.googleapis.com/kubernetes-charts-incubator
-helm repo update
-helm install --name my-kafka incubator/kafka --set replicas=1,zookeeper.replicaCount=1,zookeeper.env.ZK_HEAP_SIZE=128m --namespace $NAMESPACE --wait
+echo "install kafka"
+kapp deploy -y -n apps -a kafka -f https://storage.googleapis.com/projectriff/charts/uncharted/${riff_version}/kafka.yaml
 
-riff streaming kafka-provider create franz --bootstrap-servers my-kafka:9092 --namespace $NAMESPACE
+echo "installing riff streaming runtime"
+kapp deploy -y -n apps -a keda -f https://storage.googleapis.com/projectriff/charts/uncharted/${riff_version}/keda.yaml
+kapp deploy -y -n apps -a riff-streaming-runtime -f https://storage.googleapis.com/projectriff/charts/uncharted/${riff_version}/riff-streaming-runtime.yaml
+
+riff streaming kafka-provider create franz --bootstrap-servers kafka.kafka:9092 --namespace $NAMESPACE
 kubectl wait --for=condition=Ready "pod/$(kubectl -n $NAMESPACE get pod -lstreaming.projectriff.io/kafka-provider-gateway -otemplate --template="{{(index .items 0).metadata.name}}")" -n $NAMESPACE --timeout=60s
 kubectl -n $NAMESPACE port-forward "svc/$(kubectl -n $NAMESPACE get svc -lstreaming.projectriff.io/kafka-provider-gateway -otemplate --template="{{(index .items 0).metadata.name}}")" "6565:6565" &
