@@ -127,12 +127,12 @@ func chopContentType(contentType string) string {
 // To deal with errors while reading messages, an error handler function should also be provided.
 //
 // The function returns a context.CancelFunc which may be called for cancelling the subscription.
-func (lc *StreamClient) Subscribe(ctx context.Context, group string, offset uint64, f EventHandler, e EventErrHandler) (context.CancelFunc, error) {
+func (lc *StreamClient) Subscribe(ctx context.Context, group string, fromBeginning bool, f EventHandler, e EventErrHandler) (context.CancelFunc, error) {
 	subContext, cancel := context.WithCancel(ctx)
 	request := liiklus.SubscribeRequest{
 		Topic:                lc.TopicName,
 		Group:                group,
-		AutoOffsetReset:      liiklus.SubscribeRequest_EARLIEST,
+		AutoOffsetReset:      getAutoOffsetReset(fromBeginning),
 	}
 	subscribedClient, err := lc.client.Subscribe(subContext, &request)
 	if err != nil {
@@ -146,7 +146,7 @@ func (lc *StreamClient) Subscribe(ctx context.Context, group string, offset uint
 
 	receiveRequest := liiklus.ReceiveRequest{
 		Assignment:           subscribeReply.GetAssignment(),
-		LastKnownOffset:      offset,
+		LastKnownOffset:      0,
 	}
 	receiveClient, err := lc.client.Receive(subContext, &receiveRequest)
 	if err != nil {
@@ -194,6 +194,13 @@ func (lc *StreamClient) Subscribe(ctx context.Context, group string, offset uint
 	}()
 
 	return cancel, nil
+}
+
+func getAutoOffsetReset(fromBeginning bool) liiklus.SubscribeRequest_AutoOffsetReset {
+	if fromBeginning {
+		return liiklus.SubscribeRequest_EARLIEST
+	}
+	return liiklus.SubscribeRequest_LATEST
 }
 
 // Close cleans up underlying resources used by this client. The client is then unable to publish.

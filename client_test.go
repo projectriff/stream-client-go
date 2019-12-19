@@ -24,7 +24,7 @@ func TestSimplePublishSubscribe(t *testing.T) {
 	payload := "FOO"
 	headers := map[string]string{"H1":"V1", "H2":"V2"}
 	publish(c, payload, "text/plain", topic, headers, t)
-	subscribe(c, payload, topic, 0, headers, t)
+	subscribe(c, payload, topic, true, headers, t)
 }
 
 func setupStreamingClient(topic string, t *testing.T) *client.StreamClient {
@@ -44,7 +44,7 @@ func publish(c *client.StreamClient, value, contentType, topic string, headers m
 	fmt.Printf("Published: %+v\n", publishResult)
 }
 
-func subscribe(c *client.StreamClient, expectedValue, topic string, offset uint64, headers map[string]string, t *testing.T) {
+func subscribe(c *client.StreamClient, expectedValue, topic string, fromBeginning bool, headers map[string]string, t *testing.T) {
 
 	var errHandler client.EventErrHandler
 	errHandler = func(cancel context.CancelFunc, err error) {
@@ -66,7 +66,7 @@ func subscribe(c *client.StreamClient, expectedValue, topic string, offset uint6
 		return nil
 	}
 
-	_, err := c.Subscribe(context.Background(), "g8", offset, eventHandler, errHandler)
+	_, err := c.Subscribe(context.Background(), "g8", fromBeginning, eventHandler, errHandler)
 	if err != nil {
 		t.Error(err)
 	}
@@ -105,7 +105,7 @@ func TestSubscribeBeforePublish(t *testing.T) {
 	eventErrHandler = func(cancel context.CancelFunc, err error) {
 		t.Error("Did not expect an error")
 	}
-	_, err = c.Subscribe(context.Background(), t.Name(), 0, eventHandler, eventErrHandler)
+	_, err = c.Subscribe(context.Background(), t.Name(), true, eventHandler, eventErrHandler)
 	if err != nil {
 		t.Error(err)
 	}
@@ -141,7 +141,7 @@ func TestSubscribeCancel(t *testing.T) {
 	eventErrHandler = func(cancel context.CancelFunc, err error) {
 		result <- expectedError
 	}
-	cancel, err := c.Subscribe(context.Background(), t.Name(), 0, eventHandler, eventErrHandler)
+	cancel, err := c.Subscribe(context.Background(), t.Name(), true, eventHandler, eventErrHandler)
 	if err != nil {
 		t.Error(err)
 	}
@@ -170,7 +170,7 @@ func TestMultipleSubscribe(t *testing.T) {
 		panic(err)
 	}
 	var err error
-	_, err = c1.Subscribe(context.Background(), t.Name()+"1", 0, func(ctx context.Context, payload io.Reader, contentType string, headers map[string]string) error {
+	_, err = c1.Subscribe(context.Background(), t.Name()+"1", true, func(ctx context.Context, payload io.Reader, contentType string, headers map[string]string) error {
 		bytes, err := ioutil.ReadAll(payload)
 		if err != nil {
 			return err
@@ -181,7 +181,7 @@ func TestMultipleSubscribe(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	_, err = c2.Subscribe(context.Background(), t.Name()+"2", 0, func(ctx context.Context, payload io.Reader, contentType string, headers map[string]string) error {
+	_, err = c2.Subscribe(context.Background(), t.Name()+"2", true, func(ctx context.Context, payload io.Reader, contentType string, headers map[string]string) error {
 		bytes, err := ioutil.ReadAll(payload)
 		if err != nil {
 			return err
@@ -202,5 +202,44 @@ func TestMultipleSubscribe(t *testing.T) {
 	v2 := <-result2
 	if v2 != testVal2 {
 		t.Errorf("expected value: %s, but was: %s", testVal2, v2)
+	}
+}
+
+func TestSubscribeFromLatest(t *testing.T) {
+	now := time.Now()
+	topic := fmt.Sprintf("test1_%s%d%d%d", t.Name(), now.Hour(), now.Minute(), now.Second())
+
+	c, err := client.NewStreamClient("localhost:6565", topic, "text/plain")
+	if err != nil {
+		t.Error(err)
+	}
+	testVal1 := "testVal1"
+	testVal2 := "testVal2"
+	result := make(chan string, 1)
+
+	publish(c, testVal1, "text/plain", topic, nil, t)
+
+	var eventErrHandler client.EventErrHandler
+	eventErrHandler = func(cancel context.CancelFunc, err error) {
+		panic(err)
+	}
+	_, err = c.Subscribe(context.Background(), t.Name(), false, func(ctx context.Context, payload io.Reader, contentType string, headers map[string]string) error {
+		bytes, err := ioutil.ReadAll(payload)
+		if err != nil {
+			return err
+		}
+		result <- string(bytes)
+		return nil
+	}, eventErrHandler)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// subscribe goroutine may not have entered Recv() before the event is published
+	time.Sleep(1 * time.Second)
+
+	publish(c, testVal2, "text/plain", topic, nil, t)
+	v := <-result
+	if v != testVal2 {
+		t.Errorf("expected value: %s, but was: %s", testVal2, v)
 	}
 }
