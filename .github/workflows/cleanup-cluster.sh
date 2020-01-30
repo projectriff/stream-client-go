@@ -12,8 +12,14 @@ echo "cleanup riff streaming runtime"
 kapp delete -y -n apps -a riff-streaming-runtime
 kapp delete -y -n apps -a keda
 
-echo "cleanup kafka"
-kapp delete -y -n apps -a kafka
+if [ $GATEWAY = kafka ] ; then
+    echo "cleanup kafka"
+    kapp delete -y -n apps -a internal-only-kafka
+fi
+if [ $GATEWAY = pulsar ] ; then
+    echo "cleanup pulsar"
+    kapp delete -y -n apps -a internal-only-pulsar
+fi
 
 echo "cleanup riff build"
 kapp delete -y -n apps -a riff-build
