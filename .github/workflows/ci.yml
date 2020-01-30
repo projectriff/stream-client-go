@@ -10,7 +10,7 @@ on:
 env:
   FATS_DIR: fats
   FATS_REPO: projectriff/fats
-  FATS_REFSPEC: 60c124bcc3c0c3c5d5c784def30ea965c942b461 # master as of 2019-12-10
+  FATS_REFSPEC: fa0d71d66ad163346f3ad20d7ab55784d6a11b20 # master as of 2020-01-30
 
 jobs:
 
@@ -65,7 +65,7 @@ jobs:
           echo "##[set-env name=REGISTRY]docker-daemon"
           echo "##[set-env name=CLUSTER_NAME]fats-${job}-kind"
           echo "##[set-env name=NAMESPACE]stream-client-${job}-kind"
-      - name: 'setup cluster'
+      - name: Setup cluster
         run: .github/workflows/setup-cluster.sh
       - name: 'run integration test'
         run: go test ./...
@@ -74,8 +74,8 @@ jobs:
         shell: bash
         if: always()
         timeout-minutes: 1
-      - name: Cleanup
-        run: ${FATS_DIR}/cleanup.sh
+      - name: Cleanup cluster
+        run: .github/workflows/cleanup-cluster.sh
         shell: bash
         if: always()
-        timeout-minutes: 1
+        timeout-minutes: 10
