@@ -27,6 +27,5 @@ echo "installing riff streaming runtime"
 kapp deploy -y -n apps -a keda -f https://storage.googleapis.com/projectriff/release/${riff_version}/keda.yaml
 kapp deploy -y -n apps -a riff-streaming-runtime -f https://storage.googleapis.com/projectriff/release/${riff_version}/riff-streaming-runtime.yaml
 
-riff streaming kafka-provider create franz --bootstrap-servers kafka.kafka:9092 --namespace $NAMESPACE
-kubectl wait --for=condition=Ready "pod/$(kubectl -n $NAMESPACE get pod -lstreaming.projectriff.io/kafka-provider-gateway -otemplate --template="{{(index .items 0).metadata.name}}")" -n $NAMESPACE --timeout=60s
-kubectl -n $NAMESPACE port-forward "svc/$(kubectl -n $NAMESPACE get svc -lstreaming.projectriff.io/kafka-provider-gateway -otemplate --template="{{(index .items 0).metadata.name}}")" "6565:6565" &
+riff streaming kafka-gateway create franz --bootstrap-servers kafka.kafka:9092 --namespace $NAMESPACE --tail
+kubectl -n $NAMESPACE port-forward "svc/$(kubectl -n $NAMESPACE get svc -lstreaming.projectriff.io/kafka-gateway=franz -otemplate --template="{{(index .items 0).metadata.name}}")" "6565:6565" &
