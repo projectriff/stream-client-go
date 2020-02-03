@@ -48,6 +48,7 @@ jobs:
         - inmemory
         - kafka
         - pulsar
+      fail-fast: false
     steps:
       - uses: actions/checkout@v1
       - uses: actions/setup-go@v1

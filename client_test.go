@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"os"
 	"reflect"
 	"strings"
 	"testing"
@@ -17,7 +18,7 @@ import (
 // setup details
 func TestSimplePublishSubscribe(t *testing.T) {
 	now := time.Now()
-	topic := fmt.Sprintf("test_%s%d%d%d", t.Name(), now.Hour(), now.Minute(), now.Second())
+	topic := topicName(t.Name(), fmt.Sprintf("%d%d%d", now.Hour(), now.Minute(), now.Second()))
 
 	c := setupStreamingClient(topic, t)
 
@@ -82,7 +83,7 @@ func subscribe(c *client.StreamClient, expectedValue, topic string, fromBeginnin
 
 func TestSubscribeBeforePublish(t *testing.T) {
 	now := time.Now()
-	topic := fmt.Sprintf("test_%s%d%d%d", t.Name(), now.Hour(), now.Minute(), now.Second())
+	topic := topicName(t.Name(), fmt.Sprintf("%d%d%d", now.Hour(), now.Minute(), now.Second()))
 
 	c, err := client.NewStreamClient("localhost:6565", topic, "text/plain")
 	if err != nil {
@@ -118,7 +119,7 @@ func TestSubscribeBeforePublish(t *testing.T) {
 
 func TestSubscribeCancel(t *testing.T) {
 	now := time.Now()
-	topic := fmt.Sprintf("test_%s%d%d%d", t.Name(), now.Hour(), now.Minute(), now.Second())
+	topic := topicName(t.Name(), fmt.Sprintf("%d%d%d", now.Hour(), now.Minute(), now.Second()))
 
 	c, err := client.NewStreamClient("localhost:6565", topic, "text/plain")
 	if err != nil {
@@ -154,8 +155,8 @@ func TestSubscribeCancel(t *testing.T) {
 
 func TestMultipleSubscribe(t *testing.T) {
 	now := time.Now()
-	topic1 := fmt.Sprintf("test1_%s%d%d%d", t.Name(), now.Hour(), now.Minute(), now.Second())
-	topic2 := fmt.Sprintf("test2_%s%d%d%d", t.Name(), now.Hour(), now.Minute(), now.Second())
+	topic1 := topicName(t.Name(), fmt.Sprintf("%d%d%d_1", now.Hour(), now.Minute(), now.Second()))
+	topic2 := topicName(t.Name(), fmt.Sprintf("%d%d%d_2", now.Hour(), now.Minute(), now.Second()))
 
 	c1 := setupStreamingClient(topic1, t)
 	c2 := setupStreamingClient(topic2, t)
@@ -207,7 +208,7 @@ func TestMultipleSubscribe(t *testing.T) {
 
 func TestSubscribeFromLatest(t *testing.T) {
 	now := time.Now()
-	topic := fmt.Sprintf("test1_%s%d%d%d", t.Name(), now.Hour(), now.Minute(), now.Second())
+	topic := topicName(t.Name(), fmt.Sprintf("%d%d%d", now.Hour(), now.Minute(), now.Second()))
 
 	c, err := client.NewStreamClient("localhost:6565", topic, "text/plain")
 	if err != nil {
@@ -241,5 +242,15 @@ func TestSubscribeFromLatest(t *testing.T) {
 	v := <-result
 	if v != testVal2 {
 		t.Errorf("expected value: %s, but was: %s", testVal2, v)
+	}
+}
+
+func topicName(namespace, name string) string {
+	switch os.Getenv("GATEWAY") {
+	case "pulsar":
+		tenant := "public"
+		return fmt.Sprintf("persistent://%s/%s/%s", tenant, namespace, name)
+	default:
+		return fmt.Sprintf("%s_%s", namespace, name)
 	}
 }

@@ -43,4 +43,4 @@ if [ $GATEWAY = pulsar ] ; then
   riff streaming pulsar-gateway create test --service-url pulsar://pulsar.pulsar.svc.cluster.local:6650 --namespace $NAMESPACE --tail
 fi
 
-kubectl -n $NAMESPACE port-forward "svc/$(kubectl -n $NAMESPACE get svc -lstreaming.projectriff.io/gateway=test -ojsonpath='{.items[].metadata.name}')" "6565:6565" &
+kubectl -n $NAMESPACE port-forward "$(kubectl -n $NAMESPACE get svc -lstreaming.projectriff.io/gateway=test -oname)" "6565:6565" &
