@@ -236,7 +236,7 @@ func TestSubscribeFromLatest(t *testing.T) {
 		t.Fatal(err)
 	}
 	// subscribe goroutine may not have entered Recv() before the event is published
-	time.Sleep(1 * time.Second)
+	time.Sleep(5 * time.Second)
 
 	publish(c, testVal2, "text/plain", topic, nil, t)
 	v := <-result
