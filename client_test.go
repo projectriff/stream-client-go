@@ -248,8 +248,7 @@ func TestSubscribeFromLatest(t *testing.T) {
 func topicName(namespace, name string) string {
 	switch os.Getenv("GATEWAY") {
 	case "pulsar":
-		tenant := "public"
-		return fmt.Sprintf("persistent://%s/%s/%s", tenant, namespace, name)
+		return fmt.Sprintf("persistent://public/default/%s-%s", namespace, name)
 	default:
 		return fmt.Sprintf("%s_%s", namespace, name)
 	}
