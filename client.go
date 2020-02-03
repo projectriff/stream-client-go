@@ -111,11 +111,11 @@ func (lc *StreamClient) Publish(ctx context.Context, payload io.Reader, key io.R
 		Value: value,
 		Key:   kValue,
 	}
-	if publishReply, err := lc.client.Publish(ctx, &request); err != nil {
+	publishReply, err := lc.client.Publish(ctx, &request)
+	if err != nil {
 		return PublishResult{}, err
-	} else {
-		return PublishResult{Offset: publishReply.Offset, Partition: publishReply.Partition}, nil
 	}
+	return PublishResult{Offset: publishReply.Offset, Partition: publishReply.Partition}, nil
 }
 
 func chopContentType(contentType string) string {
@@ -130,66 +130,72 @@ func chopContentType(contentType string) string {
 func (lc *StreamClient) Subscribe(ctx context.Context, group string, fromBeginning bool, f EventHandler, e EventErrHandler) (context.CancelFunc, error) {
 	subContext, cancel := context.WithCancel(ctx)
 	request := liiklus.SubscribeRequest{
-		Topic:                lc.TopicName,
-		Group:                group,
-		AutoOffsetReset:      getAutoOffsetReset(fromBeginning),
+		Topic:           lc.TopicName,
+		Group:           group,
+		AutoOffsetReset: getAutoOffsetReset(fromBeginning),
 	}
 	subscribedClient, err := lc.client.Subscribe(subContext, &request)
 	if err != nil {
 		return cancel, err
 	}
 
-	subscribeReply, err := subscribedClient.Recv()
-	if err != nil {
-		return cancel, err
-	}
-
-	receiveRequest := liiklus.ReceiveRequest{
-		Assignment:           subscribeReply.GetAssignment(),
-		LastKnownOffset:      0,
-	}
-	receiveClient, err := lc.client.Receive(subContext, &receiveRequest)
-	if err != nil {
-		return cancel, err
-	}
-
 	go func() {
 		for {
-			select {
-			case <- subContext.Done():
-				e(cancel, errors.New("context terminated"))
-				return
-			default:
-			}
-			recvReply, err := receiveClient.Recv()
+			subscribeReply, err := subscribedClient.Recv()
 			if err != nil {
 				e(cancel, err)
 				return
 			}
 
-			m := serialization.Message{}
+			receiveRequest := liiklus.ReceiveRequest{
+				Assignment:      subscribeReply.GetAssignment(),
+				LastKnownOffset: 0,
+			}
+			receiveClient, err := lc.client.Receive(subContext, &receiveRequest)
+			if err != nil {
+				e(cancel, err)
+				return
+			}
 
-			record := recvReply.GetRecord()
-			err = proto.Unmarshal(record.Value, &m)
-			if err != nil {
-				e(cancel, err)
-				return
-			}
-			err = f(subContext, bytes.NewReader(m.GetPayload()), m.GetContentType(), m.GetHeaders())
-			if err != nil {
-				e(cancel, err)
-				return
-			}
-			ackRequest := liiklus.AckRequest{
-				Topic:                lc.TopicName,
-				Group:                group,
-				Offset:               record.Offset,
-			}
-			_, err = lc.client.Ack(subContext, &ackRequest)
-			if err != nil {
-				e(cancel, err)
-				return
-			}
+			go func() {
+				for {
+					select {
+					case <-subContext.Done():
+						e(cancel, errors.New("context terminated"))
+						return
+					default:
+					}
+					recvReply, err := receiveClient.Recv()
+					if err != nil {
+						e(cancel, err)
+						return
+					}
+
+					m := serialization.Message{}
+
+					record := recvReply.GetRecord()
+					err = proto.Unmarshal(record.Value, &m)
+					if err != nil {
+						e(cancel, err)
+						return
+					}
+					err = f(subContext, bytes.NewReader(m.GetPayload()), m.GetContentType(), m.GetHeaders())
+					if err != nil {
+						e(cancel, err)
+						return
+					}
+					ackRequest := liiklus.AckRequest{
+						Topic:  lc.TopicName,
+						Group:  group,
+						Offset: record.Offset,
+					}
+					_, err = lc.client.Ack(subContext, &ackRequest)
+					if err != nil {
+						e(cancel, err)
+						return
+					}
+				}
+			}()
 		}
 	}()
 

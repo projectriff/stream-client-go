@@ -13,7 +13,7 @@ import (
 	client "github.com/projectriff/stream-client-go"
 )
 
-// This is an integration test meant to be run against a kafka custer. Please refer to the CI scripts for
+// This is an integration test meant to be run against a liiklus gateway. Please refer to the CI scripts for
 // setup details
 func TestSimplePublishSubscribe(t *testing.T) {
 	now := time.Now()
@@ -22,7 +22,7 @@ func TestSimplePublishSubscribe(t *testing.T) {
 	c := setupStreamingClient(topic, t)
 
 	payload := "FOO"
-	headers := map[string]string{"H1":"V1", "H2":"V2"}
+	headers := map[string]string{"H1": "V1", "H2": "V2"}
 	publish(c, payload, "text/plain", topic, headers, t)
 	subscribe(c, payload, topic, true, headers, t)
 }
@@ -48,7 +48,7 @@ func subscribe(c *client.StreamClient, expectedValue, topic string, fromBeginnin
 
 	var errHandler client.EventErrHandler
 	errHandler = func(cancel context.CancelFunc, err error) {
-		fmt.Printf("cancelling subsctiber due to: %v", err)
+		fmt.Printf("cancelling subscriber due to: %v", err)
 		cancel()
 	}
 
@@ -74,7 +74,7 @@ func subscribe(c *client.StreamClient, expectedValue, topic string, fromBeginnin
 	if v1 != expectedValue {
 		t.Errorf("expected value: %s, but was: %s", expectedValue, v1)
 	}
-	h := <- headersChan
+	h := <-headersChan
 	if !reflect.DeepEqual(headers, h) {
 		t.Errorf("headers not equal. expected %s, but was: %s", headers, h)
 	}
@@ -110,7 +110,7 @@ func TestSubscribeBeforePublish(t *testing.T) {
 		t.Error(err)
 	}
 	publish(c, testVal, "text/plain", topic, nil, t)
-	v1 := <- result
+	v1 := <-result
 	if v1 != testVal {
 		t.Errorf("expected value: %s, but was: %s", testVal, v1)
 	}
@@ -146,7 +146,7 @@ func TestSubscribeCancel(t *testing.T) {
 		t.Error(err)
 	}
 	cancel()
-	v1 := <- result
+	v1 := <-result
 	if v1 != expectedError {
 		t.Errorf("expected value: %s, but was: %s", expectedError, v1)
 	}
