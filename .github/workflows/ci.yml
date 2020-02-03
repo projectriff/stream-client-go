@@ -42,6 +42,14 @@ jobs:
     name: Integration testing
     needs: unit
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        gateway:
+        - inmemory
+        - kafka
+        # TODO add pulsar tests
+        # - pulsar
+      fail-fast: false
     steps:
       - uses: actions/checkout@v1
       - uses: actions/setup-go@v1
@@ -65,10 +73,11 @@ jobs:
           echo "##[set-env name=REGISTRY]docker-daemon"
           echo "##[set-env name=CLUSTER_NAME]fats-${job}-kind"
           echo "##[set-env name=NAMESPACE]stream-client-${job}-kind"
+          echo "##[set-env name=GATEWAY]${{ matrix.gateway }}"
       - name: Setup cluster
         run: .github/workflows/setup-cluster.sh
       - name: 'run integration test'
-        run: go test ./...
+        run: go test ./... -timeout 30s
       - name: Collect diagnostics
         run: ${FATS_DIR}/diagnostics.sh
         shell: bash

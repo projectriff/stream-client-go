@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"os"
 	"reflect"
 	"strings"
 	"testing"
@@ -13,16 +14,16 @@ import (
 	client "github.com/projectriff/stream-client-go"
 )
 
-// This is an integration test meant to be run against a kafka custer. Please refer to the CI scripts for
+// This is an integration test meant to be run against a liiklus gateway. Please refer to the CI scripts for
 // setup details
 func TestSimplePublishSubscribe(t *testing.T) {
 	now := time.Now()
-	topic := fmt.Sprintf("test_%s%d%d%d", t.Name(), now.Hour(), now.Minute(), now.Second())
+	topic := topicName(t.Name(), fmt.Sprintf("%d%d%d", now.Hour(), now.Minute(), now.Second()))
 
 	c := setupStreamingClient(topic, t)
 
 	payload := "FOO"
-	headers := map[string]string{"H1":"V1", "H2":"V2"}
+	headers := map[string]string{"H1": "V1", "H2": "V2"}
 	publish(c, payload, "text/plain", topic, headers, t)
 	subscribe(c, payload, topic, true, headers, t)
 }
@@ -48,7 +49,7 @@ func subscribe(c *client.StreamClient, expectedValue, topic string, fromBeginnin
 
 	var errHandler client.EventErrHandler
 	errHandler = func(cancel context.CancelFunc, err error) {
-		fmt.Printf("cancelling subsctiber due to: %v", err)
+		fmt.Printf("cancelling subscriber due to: %v", err)
 		cancel()
 	}
 
@@ -74,7 +75,7 @@ func subscribe(c *client.StreamClient, expectedValue, topic string, fromBeginnin
 	if v1 != expectedValue {
 		t.Errorf("expected value: %s, but was: %s", expectedValue, v1)
 	}
-	h := <- headersChan
+	h := <-headersChan
 	if !reflect.DeepEqual(headers, h) {
 		t.Errorf("headers not equal. expected %s, but was: %s", headers, h)
 	}
@@ -82,7 +83,7 @@ func subscribe(c *client.StreamClient, expectedValue, topic string, fromBeginnin
 
 func TestSubscribeBeforePublish(t *testing.T) {
 	now := time.Now()
-	topic := fmt.Sprintf("test_%s%d%d%d", t.Name(), now.Hour(), now.Minute(), now.Second())
+	topic := topicName(t.Name(), fmt.Sprintf("%d%d%d", now.Hour(), now.Minute(), now.Second()))
 
 	c, err := client.NewStreamClient("localhost:6565", topic, "text/plain")
 	if err != nil {
@@ -110,7 +111,7 @@ func TestSubscribeBeforePublish(t *testing.T) {
 		t.Error(err)
 	}
 	publish(c, testVal, "text/plain", topic, nil, t)
-	v1 := <- result
+	v1 := <-result
 	if v1 != testVal {
 		t.Errorf("expected value: %s, but was: %s", testVal, v1)
 	}
@@ -118,7 +119,7 @@ func TestSubscribeBeforePublish(t *testing.T) {
 
 func TestSubscribeCancel(t *testing.T) {
 	now := time.Now()
-	topic := fmt.Sprintf("test_%s%d%d%d", t.Name(), now.Hour(), now.Minute(), now.Second())
+	topic := topicName(t.Name(), fmt.Sprintf("%d%d%d", now.Hour(), now.Minute(), now.Second()))
 
 	c, err := client.NewStreamClient("localhost:6565", topic, "text/plain")
 	if err != nil {
@@ -146,7 +147,7 @@ func TestSubscribeCancel(t *testing.T) {
 		t.Error(err)
 	}
 	cancel()
-	v1 := <- result
+	v1 := <-result
 	if v1 != expectedError {
 		t.Errorf("expected value: %s, but was: %s", expectedError, v1)
 	}
@@ -154,8 +155,8 @@ func TestSubscribeCancel(t *testing.T) {
 
 func TestMultipleSubscribe(t *testing.T) {
 	now := time.Now()
-	topic1 := fmt.Sprintf("test1_%s%d%d%d", t.Name(), now.Hour(), now.Minute(), now.Second())
-	topic2 := fmt.Sprintf("test2_%s%d%d%d", t.Name(), now.Hour(), now.Minute(), now.Second())
+	topic1 := topicName(t.Name(), fmt.Sprintf("%d%d%d_1", now.Hour(), now.Minute(), now.Second()))
+	topic2 := topicName(t.Name(), fmt.Sprintf("%d%d%d_2", now.Hour(), now.Minute(), now.Second()))
 
 	c1 := setupStreamingClient(topic1, t)
 	c2 := setupStreamingClient(topic2, t)
@@ -207,7 +208,7 @@ func TestMultipleSubscribe(t *testing.T) {
 
 func TestSubscribeFromLatest(t *testing.T) {
 	now := time.Now()
-	topic := fmt.Sprintf("test1_%s%d%d%d", t.Name(), now.Hour(), now.Minute(), now.Second())
+	topic := topicName(t.Name(), fmt.Sprintf("%d%d%d", now.Hour(), now.Minute(), now.Second()))
 
 	c, err := client.NewStreamClient("localhost:6565", topic, "text/plain")
 	if err != nil {
@@ -235,11 +236,20 @@ func TestSubscribeFromLatest(t *testing.T) {
 		t.Fatal(err)
 	}
 	// subscribe goroutine may not have entered Recv() before the event is published
-	time.Sleep(1 * time.Second)
+	time.Sleep(5 * time.Second)
 
 	publish(c, testVal2, "text/plain", topic, nil, t)
 	v := <-result
 	if v != testVal2 {
 		t.Errorf("expected value: %s, but was: %s", testVal2, v)
+	}
+}
+
+func topicName(namespace, name string) string {
+	switch os.Getenv("GATEWAY") {
+	case "pulsar":
+		return fmt.Sprintf("persistent://public/default/%s-%s", namespace, name)
+	default:
+		return fmt.Sprintf("%s_%s", namespace, name)
 	}
 }

@@ -17,7 +17,7 @@ pkg/liiklus/LiiklusService.pb.go: LiiklusService.proto
 
 .PHONY: test
 test: fmt vet ## Run tests
-	go test ./... -coverprofile cover.out
+	go test ./... -timeout 30s -coverprofile cover.out
 
 # Run go fmt against code
 .PHONY: fmt
