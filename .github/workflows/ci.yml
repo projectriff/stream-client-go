@@ -47,7 +47,8 @@ jobs:
         gateway:
         - inmemory
         - kafka
-        - pulsar
+        # TODO add pulsar tests
+        # - pulsar
       fail-fast: false
     steps:
       - uses: actions/checkout@v1
