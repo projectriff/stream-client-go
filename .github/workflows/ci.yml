@@ -76,7 +76,7 @@ jobs:
       - name: Setup cluster
         run: .github/workflows/setup-cluster.sh
       - name: 'run integration test'
-        run: go test ./...
+        run: go test ./... -timeout 30s
       - name: Collect diagnostics
         run: ${FATS_DIR}/diagnostics.sh
         shell: bash
