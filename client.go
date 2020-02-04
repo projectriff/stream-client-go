@@ -26,11 +26,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/golang/protobuf/proto"
+	"github.com/google/uuid"
 	"google.golang.org/grpc"
 
 	"github.com/projectriff/stream-client-go/pkg/liiklus"
-	"github.com/projectriff/stream-client-go/pkg/serialization"
 )
 
 // StreamClient allows publishing to a riff stream, through a liiklus gateway and using the riff serialization format.
@@ -80,27 +79,25 @@ func NewStreamClient(gateway string, topic string, acceptableContentType string)
 }
 
 func (lc *StreamClient) Publish(ctx context.Context, payload io.Reader, key io.Reader, contentType string, headers map[string]string) (PublishResult, error) {
-	m := serialization.Message{}
 	if chopContentType(contentType) != chopContentType(lc.acceptableContentType) { // TODO support smarter compatibility (eg subtypes)
 		return PublishResult{}, fmt.Errorf("contentType %q not compatible with expected contentType %q", contentType, lc.acceptableContentType)
 	}
-	m.ContentType = contentType
+
+	ce := liiklus.LiiklusEvent{}
+	ce.DataContentType = contentType
+	ce.Source = "source-todo" // TODO
+	ce.Type = "riff-event"    // TODO
+	ce.Id = uuid.New().String()
+
 	if bytes, err := ioutil.ReadAll(payload); err != nil {
 		return PublishResult{}, err
 	} else {
-		m.Payload = bytes
+		ce.Data = bytes
 	}
-	m.Headers = map[string]string{}
-	for k, v := range headers {
-		m.Headers[k] = v
-	}
+	// TODO headers as CE.extensions
 
 	var err error
-	var value []byte
 	var kValue []byte
-	if value, err = proto.Marshal(&m); err != nil {
-		return PublishResult{}, err
-	}
 	if key != nil {
 		if kValue, err = ioutil.ReadAll(key); err != nil {
 			return PublishResult{}, err
@@ -108,8 +105,8 @@ func (lc *StreamClient) Publish(ctx context.Context, payload io.Reader, key io.R
 	}
 	request := liiklus.PublishRequest{
 		Topic: lc.TopicName,
-		Value: value,
 		Key:   kValue,
+		Event: &liiklus.PublishRequest_LiiklusEvent{LiiklusEvent: &ce},
 	}
 	publishReply, err := lc.client.Publish(ctx, &request)
 	if err != nil {
@@ -149,7 +146,7 @@ func (lc *StreamClient) Subscribe(ctx context.Context, group string, fromBeginni
 
 			receiveRequest := liiklus.ReceiveRequest{
 				Assignment:      subscribeReply.GetAssignment(),
-				LastKnownOffset: 0,
+				Format:          liiklus.ReceiveRequest_LIIKLUS_EVENT,
 			}
 			receiveClient, err := lc.client.Receive(subContext, &receiveRequest)
 			if err != nil {
@@ -171,15 +168,8 @@ func (lc *StreamClient) Subscribe(ctx context.Context, group string, fromBeginni
 						return
 					}
 
-					m := serialization.Message{}
-
-					record := recvReply.GetRecord()
-					err = proto.Unmarshal(record.Value, &m)
-					if err != nil {
-						e(cancel, err)
-						return
-					}
-					err = f(subContext, bytes.NewReader(m.GetPayload()), m.GetContentType(), m.GetHeaders())
+					eventRecord := recvReply.GetLiiklusEventRecord()
+					err = f(subContext, bytes.NewReader(eventRecord.Event.Data), eventRecord.Event.DataContentType, nil /*TODO*/)
 					if err != nil {
 						e(cancel, err)
 						return
@@ -187,7 +177,7 @@ func (lc *StreamClient) Subscribe(ctx context.Context, group string, fromBeginni
 					ackRequest := liiklus.AckRequest{
 						Topic:  lc.TopicName,
 						Group:  group,
-						Offset: record.Offset,
+						Offset: eventRecord.Offset,
 					}
 					_, err = lc.client.Ack(subContext, &ackRequest)
 					if err != nil {

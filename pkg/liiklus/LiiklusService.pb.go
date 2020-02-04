@@ -47,23 +47,133 @@ func (x SubscribeRequest_AutoOffsetReset) String() string {
 }
 
 func (SubscribeRequest_AutoOffsetReset) EnumDescriptor() ([]byte, []int) {
-	return fileDescriptor_e2e285182f4dc03a, []int{2, 0}
+	return fileDescriptor_e2e285182f4dc03a, []int{3, 0}
 }
 
-type PublishRequest struct {
-	Topic                string   `protobuf:"bytes,1,opt,name=topic,proto3" json:"topic,omitempty"`
-	Key                  []byte   `protobuf:"bytes,2,opt,name=key,proto3" json:"key,omitempty"`
-	Value                []byte   `protobuf:"bytes,3,opt,name=value,proto3" json:"value,omitempty"`
+type ReceiveRequest_ContentFormat int32
+
+const (
+	ReceiveRequest_BINARY        ReceiveRequest_ContentFormat = 0
+	ReceiveRequest_LIIKLUS_EVENT ReceiveRequest_ContentFormat = 1
+)
+
+var ReceiveRequest_ContentFormat_name = map[int32]string{
+	0: "BINARY",
+	1: "LIIKLUS_EVENT",
+}
+
+var ReceiveRequest_ContentFormat_value = map[string]int32{
+	"BINARY":        0,
+	"LIIKLUS_EVENT": 1,
+}
+
+func (x ReceiveRequest_ContentFormat) String() string {
+	return proto.EnumName(ReceiveRequest_ContentFormat_name, int32(x))
+}
+
+func (ReceiveRequest_ContentFormat) EnumDescriptor() ([]byte, []int) {
+	return fileDescriptor_e2e285182f4dc03a, []int{7, 0}
+}
+
+type LiiklusEvent struct {
+	// Required
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	// Required
+	Type string `protobuf:"bytes,2,opt,name=type,proto3" json:"type,omitempty"`
+	// Required
+	Source               string   `protobuf:"bytes,3,opt,name=source,proto3" json:"source,omitempty"`
+	Time                 string   `protobuf:"bytes,5,opt,name=time,proto3" json:"time,omitempty"`
+	DataContentType      string   `protobuf:"bytes,100,opt,name=data_content_type,json=dataContentType,proto3" json:"data_content_type,omitempty"`
+	Data                 []byte   `protobuf:"bytes,101,opt,name=data,proto3" json:"data,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *LiiklusEvent) Reset()         { *m = LiiklusEvent{} }
+func (m *LiiklusEvent) String() string { return proto.CompactTextString(m) }
+func (*LiiklusEvent) ProtoMessage()    {}
+func (*LiiklusEvent) Descriptor() ([]byte, []int) {
+	return fileDescriptor_e2e285182f4dc03a, []int{0}
+}
+
+func (m *LiiklusEvent) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_LiiklusEvent.Unmarshal(m, b)
+}
+func (m *LiiklusEvent) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_LiiklusEvent.Marshal(b, m, deterministic)
+}
+func (m *LiiklusEvent) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_LiiklusEvent.Merge(m, src)
+}
+func (m *LiiklusEvent) XXX_Size() int {
+	return xxx_messageInfo_LiiklusEvent.Size(m)
+}
+func (m *LiiklusEvent) XXX_DiscardUnknown() {
+	xxx_messageInfo_LiiklusEvent.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_LiiklusEvent proto.InternalMessageInfo
+
+func (m *LiiklusEvent) GetId() string {
+	if m != nil {
+		return m.Id
+	}
+	return ""
+}
+
+func (m *LiiklusEvent) GetType() string {
+	if m != nil {
+		return m.Type
+	}
+	return ""
+}
+
+func (m *LiiklusEvent) GetSource() string {
+	if m != nil {
+		return m.Source
+	}
+	return ""
+}
+
+func (m *LiiklusEvent) GetTime() string {
+	if m != nil {
+		return m.Time
+	}
+	return ""
+}
+
+func (m *LiiklusEvent) GetDataContentType() string {
+	if m != nil {
+		return m.DataContentType
+	}
+	return ""
+}
+
+func (m *LiiklusEvent) GetData() []byte {
+	if m != nil {
+		return m.Data
+	}
+	return nil
+}
+
+type PublishRequest struct {
+	Topic string `protobuf:"bytes,1,opt,name=topic,proto3" json:"topic,omitempty"`
+	Key   []byte `protobuf:"bytes,2,opt,name=key,proto3" json:"key,omitempty"`
+	Value []byte `protobuf:"bytes,3,opt,name=value,proto3" json:"value,omitempty"` // Deprecated: Do not use.
+	// Types that are valid to be assigned to Event:
+	//	*PublishRequest_LiiklusEvent
+	Event                isPublishRequest_Event `protobuf_oneof:"event"`
+	XXX_NoUnkeyedLiteral struct{}               `json:"-"`
+	XXX_unrecognized     []byte                 `json:"-"`
+	XXX_sizecache        int32                  `json:"-"`
 }
 
 func (m *PublishRequest) Reset()         { *m = PublishRequest{} }
 func (m *PublishRequest) String() string { return proto.CompactTextString(m) }
 func (*PublishRequest) ProtoMessage()    {}
 func (*PublishRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_e2e285182f4dc03a, []int{0}
+	return fileDescriptor_e2e285182f4dc03a, []int{1}
 }
 
 func (m *PublishRequest) XXX_Unmarshal(b []byte) error {
@@ -98,11 +208,43 @@ func (m *PublishRequest) GetKey() []byte {
 	return nil
 }
 
+// Deprecated: Do not use.
 func (m *PublishRequest) GetValue() []byte {
 	if m != nil {
 		return m.Value
 	}
 	return nil
+}
+
+type isPublishRequest_Event interface {
+	isPublishRequest_Event()
+}
+
+type PublishRequest_LiiklusEvent struct {
+	LiiklusEvent *LiiklusEvent `protobuf:"bytes,4,opt,name=liiklusEvent,proto3,oneof"`
+}
+
+func (*PublishRequest_LiiklusEvent) isPublishRequest_Event() {}
+
+func (m *PublishRequest) GetEvent() isPublishRequest_Event {
+	if m != nil {
+		return m.Event
+	}
+	return nil
+}
+
+func (m *PublishRequest) GetLiiklusEvent() *LiiklusEvent {
+	if x, ok := m.GetEvent().(*PublishRequest_LiiklusEvent); ok {
+		return x.LiiklusEvent
+	}
+	return nil
+}
+
+// XXX_OneofWrappers is for the internal use of the proto package.
+func (*PublishRequest) XXX_OneofWrappers() []interface{} {
+	return []interface{}{
+		(*PublishRequest_LiiklusEvent)(nil),
+	}
 }
 
 type PublishReply struct {
@@ -118,7 +260,7 @@ func (m *PublishReply) Reset()         { *m = PublishReply{} }
 func (m *PublishReply) String() string { return proto.CompactTextString(m) }
 func (*PublishReply) ProtoMessage()    {}
 func (*PublishReply) Descriptor() ([]byte, []int) {
-	return fileDescriptor_e2e285182f4dc03a, []int{1}
+	return fileDescriptor_e2e285182f4dc03a, []int{2}
 }
 
 func (m *PublishReply) XXX_Unmarshal(b []byte) error {
@@ -163,8 +305,8 @@ func (m *PublishReply) GetTopic() string {
 type SubscribeRequest struct {
 	Topic                string                           `protobuf:"bytes,1,opt,name=topic,proto3" json:"topic,omitempty"`
 	Group                string                           `protobuf:"bytes,2,opt,name=group,proto3" json:"group,omitempty"`
-	GroupVersion         uint32                           `protobuf:"varint,4,opt,name=groupVersion,proto3" json:"groupVersion,omitempty"`
-	AutoOffsetReset      SubscribeRequest_AutoOffsetReset `protobuf:"varint,3,opt,name=autoOffsetReset,proto3,enum=com.github.bsideup.liiklus.SubscribeRequest_AutoOffsetReset" json:"autoOffsetReset,omitempty"`
+	GroupVersion         uint32                           `protobuf:"varint,4,opt,name=group_version,json=groupVersion,proto3" json:"group_version,omitempty"`
+	AutoOffsetReset      SubscribeRequest_AutoOffsetReset `protobuf:"varint,3,opt,name=auto_offset_reset,json=autoOffsetReset,proto3,enum=com.github.bsideup.liiklus.SubscribeRequest_AutoOffsetReset" json:"auto_offset_reset,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}                         `json:"-"`
 	XXX_unrecognized     []byte                           `json:"-"`
 	XXX_sizecache        int32                            `json:"-"`
@@ -174,7 +316,7 @@ func (m *SubscribeRequest) Reset()         { *m = SubscribeRequest{} }
 func (m *SubscribeRequest) String() string { return proto.CompactTextString(m) }
 func (*SubscribeRequest) ProtoMessage()    {}
 func (*SubscribeRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_e2e285182f4dc03a, []int{2}
+	return fileDescriptor_e2e285182f4dc03a, []int{3}
 }
 
 func (m *SubscribeRequest) XXX_Unmarshal(b []byte) error {
@@ -224,7 +366,7 @@ func (m *SubscribeRequest) GetAutoOffsetReset() SubscribeRequest_AutoOffsetReset
 }
 
 type Assignment struct {
-	SessionId            string   `protobuf:"bytes,1,opt,name=sessionId,proto3" json:"sessionId,omitempty"`
+	SessionId            string   `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
 	Partition            uint32   `protobuf:"varint,2,opt,name=partition,proto3" json:"partition,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
@@ -235,7 +377,7 @@ func (m *Assignment) Reset()         { *m = Assignment{} }
 func (m *Assignment) String() string { return proto.CompactTextString(m) }
 func (*Assignment) ProtoMessage()    {}
 func (*Assignment) Descriptor() ([]byte, []int) {
-	return fileDescriptor_e2e285182f4dc03a, []int{3}
+	return fileDescriptor_e2e285182f4dc03a, []int{4}
 }
 
 func (m *Assignment) XXX_Unmarshal(b []byte) error {
@@ -283,7 +425,7 @@ func (m *SubscribeReply) Reset()         { *m = SubscribeReply{} }
 func (m *SubscribeReply) String() string { return proto.CompactTextString(m) }
 func (*SubscribeReply) ProtoMessage()    {}
 func (*SubscribeReply) Descriptor() ([]byte, []int) {
-	return fileDescriptor_e2e285182f4dc03a, []int{4}
+	return fileDescriptor_e2e285182f4dc03a, []int{5}
 }
 
 func (m *SubscribeReply) XXX_Unmarshal(b []byte) error {
@@ -339,7 +481,7 @@ type AckRequest struct {
 	Assignment           *Assignment `protobuf:"bytes,1,opt,name=assignment,proto3" json:"assignment,omitempty"` // Deprecated: Do not use.
 	Topic                string      `protobuf:"bytes,3,opt,name=topic,proto3" json:"topic,omitempty"`
 	Group                string      `protobuf:"bytes,4,opt,name=group,proto3" json:"group,omitempty"`
-	GroupVersion         uint32      `protobuf:"varint,5,opt,name=groupVersion,proto3" json:"groupVersion,omitempty"`
+	GroupVersion         uint32      `protobuf:"varint,5,opt,name=group_version,json=groupVersion,proto3" json:"group_version,omitempty"`
 	Partition            uint32      `protobuf:"varint,6,opt,name=partition,proto3" json:"partition,omitempty"`
 	Offset               uint64      `protobuf:"varint,2,opt,name=offset,proto3" json:"offset,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}    `json:"-"`
@@ -351,7 +493,7 @@ func (m *AckRequest) Reset()         { *m = AckRequest{} }
 func (m *AckRequest) String() string { return proto.CompactTextString(m) }
 func (*AckRequest) ProtoMessage()    {}
 func (*AckRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_e2e285182f4dc03a, []int{5}
+	return fileDescriptor_e2e285182f4dc03a, []int{6}
 }
 
 func (m *AckRequest) XXX_Unmarshal(b []byte) error {
@@ -416,18 +558,19 @@ func (m *AckRequest) GetOffset() uint64 {
 }
 
 type ReceiveRequest struct {
-	Assignment           *Assignment `protobuf:"bytes,1,opt,name=assignment,proto3" json:"assignment,omitempty"`
-	LastKnownOffset      uint64      `protobuf:"varint,2,opt,name=lastKnownOffset,proto3" json:"lastKnownOffset,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}    `json:"-"`
-	XXX_unrecognized     []byte      `json:"-"`
-	XXX_sizecache        int32       `json:"-"`
+	Assignment           *Assignment                  `protobuf:"bytes,1,opt,name=assignment,proto3" json:"assignment,omitempty"`
+	LastKnownOffset      uint64                       `protobuf:"varint,2,opt,name=last_known_offset,json=lastKnownOffset,proto3" json:"last_known_offset,omitempty"`
+	Format               ReceiveRequest_ContentFormat `protobuf:"varint,3,opt,name=format,proto3,enum=com.github.bsideup.liiklus.ReceiveRequest_ContentFormat" json:"format,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}                     `json:"-"`
+	XXX_unrecognized     []byte                       `json:"-"`
+	XXX_sizecache        int32                        `json:"-"`
 }
 
 func (m *ReceiveRequest) Reset()         { *m = ReceiveRequest{} }
 func (m *ReceiveRequest) String() string { return proto.CompactTextString(m) }
 func (*ReceiveRequest) ProtoMessage()    {}
 func (*ReceiveRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_e2e285182f4dc03a, []int{6}
+	return fileDescriptor_e2e285182f4dc03a, []int{7}
 }
 
 func (m *ReceiveRequest) XXX_Unmarshal(b []byte) error {
@@ -462,9 +605,17 @@ func (m *ReceiveRequest) GetLastKnownOffset() uint64 {
 	return 0
 }
 
+func (m *ReceiveRequest) GetFormat() ReceiveRequest_ContentFormat {
+	if m != nil {
+		return m.Format
+	}
+	return ReceiveRequest_BINARY
+}
+
 type ReceiveReply struct {
 	// Types that are valid to be assigned to Reply:
 	//	*ReceiveReply_Record_
+	//	*ReceiveReply_LiiklusEventRecord_
 	Reply                isReceiveReply_Reply `protobuf_oneof:"reply"`
 	XXX_NoUnkeyedLiteral struct{}             `json:"-"`
 	XXX_unrecognized     []byte               `json:"-"`
@@ -475,7 +626,7 @@ func (m *ReceiveReply) Reset()         { *m = ReceiveReply{} }
 func (m *ReceiveReply) String() string { return proto.CompactTextString(m) }
 func (*ReceiveReply) ProtoMessage()    {}
 func (*ReceiveReply) Descriptor() ([]byte, []int) {
-	return fileDescriptor_e2e285182f4dc03a, []int{7}
+	return fileDescriptor_e2e285182f4dc03a, []int{8}
 }
 
 func (m *ReceiveReply) XXX_Unmarshal(b []byte) error {
@@ -504,7 +655,13 @@ type ReceiveReply_Record_ struct {
 	Record *ReceiveReply_Record `protobuf:"bytes,1,opt,name=record,proto3,oneof"`
 }
 
+type ReceiveReply_LiiklusEventRecord_ struct {
+	LiiklusEventRecord *ReceiveReply_LiiklusEventRecord `protobuf:"bytes,2,opt,name=liiklus_event_record,json=liiklusEventRecord,proto3,oneof"`
+}
+
 func (*ReceiveReply_Record_) isReceiveReply_Reply() {}
+
+func (*ReceiveReply_LiiklusEventRecord_) isReceiveReply_Reply() {}
 
 func (m *ReceiveReply) GetReply() isReceiveReply_Reply {
 	if m != nil {
@@ -520,10 +677,18 @@ func (m *ReceiveReply) GetRecord() *ReceiveReply_Record {
 	return nil
 }
 
+func (m *ReceiveReply) GetLiiklusEventRecord() *ReceiveReply_LiiklusEventRecord {
+	if x, ok := m.GetReply().(*ReceiveReply_LiiklusEventRecord_); ok {
+		return x.LiiklusEventRecord
+	}
+	return nil
+}
+
 // XXX_OneofWrappers is for the internal use of the proto package.
 func (*ReceiveReply) XXX_OneofWrappers() []interface{} {
 	return []interface{}{
 		(*ReceiveReply_Record_)(nil),
+		(*ReceiveReply_LiiklusEventRecord_)(nil),
 	}
 }
 
@@ -542,7 +707,7 @@ func (m *ReceiveReply_Record) Reset()         { *m = ReceiveReply_Record{} }
 func (m *ReceiveReply_Record) String() string { return proto.CompactTextString(m) }
 func (*ReceiveReply_Record) ProtoMessage()    {}
 func (*ReceiveReply_Record) Descriptor() ([]byte, []int) {
-	return fileDescriptor_e2e285182f4dc03a, []int{7, 0}
+	return fileDescriptor_e2e285182f4dc03a, []int{8, 0}
 }
 
 func (m *ReceiveReply_Record) XXX_Unmarshal(b []byte) error {
@@ -598,10 +763,82 @@ func (m *ReceiveReply_Record) GetReplay() bool {
 	return false
 }
 
+type ReceiveReply_LiiklusEventRecord struct {
+	Offset uint64        `protobuf:"varint,1,opt,name=offset,proto3" json:"offset,omitempty"`
+	Key    []byte        `protobuf:"bytes,2,opt,name=key,proto3" json:"key,omitempty"`
+	Event  *LiiklusEvent `protobuf:"bytes,3,opt,name=event,proto3" json:"event,omitempty"`
+	// TODO drop?
+	Timestamp            *timestamp.Timestamp `protobuf:"bytes,4,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
+	Replay               bool                 `protobuf:"varint,5,opt,name=replay,proto3" json:"replay,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}             `json:"-"`
+	XXX_unrecognized     []byte               `json:"-"`
+	XXX_sizecache        int32                `json:"-"`
+}
+
+func (m *ReceiveReply_LiiklusEventRecord) Reset()         { *m = ReceiveReply_LiiklusEventRecord{} }
+func (m *ReceiveReply_LiiklusEventRecord) String() string { return proto.CompactTextString(m) }
+func (*ReceiveReply_LiiklusEventRecord) ProtoMessage()    {}
+func (*ReceiveReply_LiiklusEventRecord) Descriptor() ([]byte, []int) {
+	return fileDescriptor_e2e285182f4dc03a, []int{8, 1}
+}
+
+func (m *ReceiveReply_LiiklusEventRecord) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ReceiveReply_LiiklusEventRecord.Unmarshal(m, b)
+}
+func (m *ReceiveReply_LiiklusEventRecord) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ReceiveReply_LiiklusEventRecord.Marshal(b, m, deterministic)
+}
+func (m *ReceiveReply_LiiklusEventRecord) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReceiveReply_LiiklusEventRecord.Merge(m, src)
+}
+func (m *ReceiveReply_LiiklusEventRecord) XXX_Size() int {
+	return xxx_messageInfo_ReceiveReply_LiiklusEventRecord.Size(m)
+}
+func (m *ReceiveReply_LiiklusEventRecord) XXX_DiscardUnknown() {
+	xxx_messageInfo_ReceiveReply_LiiklusEventRecord.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ReceiveReply_LiiklusEventRecord proto.InternalMessageInfo
+
+func (m *ReceiveReply_LiiklusEventRecord) GetOffset() uint64 {
+	if m != nil {
+		return m.Offset
+	}
+	return 0
+}
+
+func (m *ReceiveReply_LiiklusEventRecord) GetKey() []byte {
+	if m != nil {
+		return m.Key
+	}
+	return nil
+}
+
+func (m *ReceiveReply_LiiklusEventRecord) GetEvent() *LiiklusEvent {
+	if m != nil {
+		return m.Event
+	}
+	return nil
+}
+
+func (m *ReceiveReply_LiiklusEventRecord) GetTimestamp() *timestamp.Timestamp {
+	if m != nil {
+		return m.Timestamp
+	}
+	return nil
+}
+
+func (m *ReceiveReply_LiiklusEventRecord) GetReplay() bool {
+	if m != nil {
+		return m.Replay
+	}
+	return false
+}
+
 type GetOffsetsRequest struct {
 	Topic                string   `protobuf:"bytes,1,opt,name=topic,proto3" json:"topic,omitempty"`
 	Group                string   `protobuf:"bytes,2,opt,name=group,proto3" json:"group,omitempty"`
-	GroupVersion         uint32   `protobuf:"varint,3,opt,name=groupVersion,proto3" json:"groupVersion,omitempty"`
+	GroupVersion         uint32   `protobuf:"varint,3,opt,name=group_version,json=groupVersion,proto3" json:"group_version,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -611,7 +848,7 @@ func (m *GetOffsetsRequest) Reset()         { *m = GetOffsetsRequest{} }
 func (m *GetOffsetsRequest) String() string { return proto.CompactTextString(m) }
 func (*GetOffsetsRequest) ProtoMessage()    {}
 func (*GetOffsetsRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_e2e285182f4dc03a, []int{8}
+	return fileDescriptor_e2e285182f4dc03a, []int{9}
 }
 
 func (m *GetOffsetsRequest) XXX_Unmarshal(b []byte) error {
@@ -664,7 +901,7 @@ func (m *GetOffsetsReply) Reset()         { *m = GetOffsetsReply{} }
 func (m *GetOffsetsReply) String() string { return proto.CompactTextString(m) }
 func (*GetOffsetsReply) ProtoMessage()    {}
 func (*GetOffsetsReply) Descriptor() ([]byte, []int) {
-	return fileDescriptor_e2e285182f4dc03a, []int{9}
+	return fileDescriptor_e2e285182f4dc03a, []int{10}
 }
 
 func (m *GetOffsetsReply) XXX_Unmarshal(b []byte) error {
@@ -692,8 +929,88 @@ func (m *GetOffsetsReply) GetOffsets() map[uint32]uint64 {
 	return nil
 }
 
+type GetEndOffsetsRequest struct {
+	Topic                string   `protobuf:"bytes,1,opt,name=topic,proto3" json:"topic,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *GetEndOffsetsRequest) Reset()         { *m = GetEndOffsetsRequest{} }
+func (m *GetEndOffsetsRequest) String() string { return proto.CompactTextString(m) }
+func (*GetEndOffsetsRequest) ProtoMessage()    {}
+func (*GetEndOffsetsRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_e2e285182f4dc03a, []int{11}
+}
+
+func (m *GetEndOffsetsRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_GetEndOffsetsRequest.Unmarshal(m, b)
+}
+func (m *GetEndOffsetsRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_GetEndOffsetsRequest.Marshal(b, m, deterministic)
+}
+func (m *GetEndOffsetsRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_GetEndOffsetsRequest.Merge(m, src)
+}
+func (m *GetEndOffsetsRequest) XXX_Size() int {
+	return xxx_messageInfo_GetEndOffsetsRequest.Size(m)
+}
+func (m *GetEndOffsetsRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_GetEndOffsetsRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_GetEndOffsetsRequest proto.InternalMessageInfo
+
+func (m *GetEndOffsetsRequest) GetTopic() string {
+	if m != nil {
+		return m.Topic
+	}
+	return ""
+}
+
+type GetEndOffsetsReply struct {
+	Offsets              map[uint32]uint64 `protobuf:"bytes,1,rep,name=offsets,proto3" json:"offsets,omitempty" protobuf_key:"varint,1,opt,name=key,proto3" protobuf_val:"varint,2,opt,name=value,proto3"`
+	XXX_NoUnkeyedLiteral struct{}          `json:"-"`
+	XXX_unrecognized     []byte            `json:"-"`
+	XXX_sizecache        int32             `json:"-"`
+}
+
+func (m *GetEndOffsetsReply) Reset()         { *m = GetEndOffsetsReply{} }
+func (m *GetEndOffsetsReply) String() string { return proto.CompactTextString(m) }
+func (*GetEndOffsetsReply) ProtoMessage()    {}
+func (*GetEndOffsetsReply) Descriptor() ([]byte, []int) {
+	return fileDescriptor_e2e285182f4dc03a, []int{12}
+}
+
+func (m *GetEndOffsetsReply) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_GetEndOffsetsReply.Unmarshal(m, b)
+}
+func (m *GetEndOffsetsReply) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_GetEndOffsetsReply.Marshal(b, m, deterministic)
+}
+func (m *GetEndOffsetsReply) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_GetEndOffsetsReply.Merge(m, src)
+}
+func (m *GetEndOffsetsReply) XXX_Size() int {
+	return xxx_messageInfo_GetEndOffsetsReply.Size(m)
+}
+func (m *GetEndOffsetsReply) XXX_DiscardUnknown() {
+	xxx_messageInfo_GetEndOffsetsReply.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_GetEndOffsetsReply proto.InternalMessageInfo
+
+func (m *GetEndOffsetsReply) GetOffsets() map[uint32]uint64 {
+	if m != nil {
+		return m.Offsets
+	}
+	return nil
+}
+
 func init() {
 	proto.RegisterEnum("com.github.bsideup.liiklus.SubscribeRequest_AutoOffsetReset", SubscribeRequest_AutoOffsetReset_name, SubscribeRequest_AutoOffsetReset_value)
+	proto.RegisterEnum("com.github.bsideup.liiklus.ReceiveRequest_ContentFormat", ReceiveRequest_ContentFormat_name, ReceiveRequest_ContentFormat_value)
+	proto.RegisterType((*LiiklusEvent)(nil), "com.github.bsideup.liiklus.LiiklusEvent")
 	proto.RegisterType((*PublishRequest)(nil), "com.github.bsideup.liiklus.PublishRequest")
 	proto.RegisterType((*PublishReply)(nil), "com.github.bsideup.liiklus.PublishReply")
 	proto.RegisterType((*SubscribeRequest)(nil), "com.github.bsideup.liiklus.SubscribeRequest")
@@ -703,61 +1020,84 @@ func init() {
 	proto.RegisterType((*ReceiveRequest)(nil), "com.github.bsideup.liiklus.ReceiveRequest")
 	proto.RegisterType((*ReceiveReply)(nil), "com.github.bsideup.liiklus.ReceiveReply")
 	proto.RegisterType((*ReceiveReply_Record)(nil), "com.github.bsideup.liiklus.ReceiveReply.Record")
+	proto.RegisterType((*ReceiveReply_LiiklusEventRecord)(nil), "com.github.bsideup.liiklus.ReceiveReply.LiiklusEventRecord")
 	proto.RegisterType((*GetOffsetsRequest)(nil), "com.github.bsideup.liiklus.GetOffsetsRequest")
 	proto.RegisterType((*GetOffsetsReply)(nil), "com.github.bsideup.liiklus.GetOffsetsReply")
 	proto.RegisterMapType((map[uint32]uint64)(nil), "com.github.bsideup.liiklus.GetOffsetsReply.OffsetsEntry")
+	proto.RegisterType((*GetEndOffsetsRequest)(nil), "com.github.bsideup.liiklus.GetEndOffsetsRequest")
+	proto.RegisterType((*GetEndOffsetsReply)(nil), "com.github.bsideup.liiklus.GetEndOffsetsReply")
+	proto.RegisterMapType((map[uint32]uint64)(nil), "com.github.bsideup.liiklus.GetEndOffsetsReply.OffsetsEntry")
 }
 
 func init() { proto.RegisterFile("LiiklusService.proto", fileDescriptor_e2e285182f4dc03a) }
 
 var fileDescriptor_e2e285182f4dc03a = []byte{
-	// 724 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xac, 0x55, 0xcd, 0x6e, 0xd3, 0x40,
-	0x10, 0xce, 0x26, 0x4d, 0xd2, 0x4c, 0x43, 0x52, 0x56, 0x55, 0x15, 0x19, 0x24, 0x2a, 0x23, 0xa1,
-	0xa8, 0x05, 0x17, 0x85, 0x4b, 0x55, 0x71, 0x49, 0xa5, 0xd0, 0x14, 0x2a, 0x5a, 0x6d, 0x2b, 0x0e,
-	0xbd, 0x39, 0xce, 0x26, 0x35, 0x71, 0xb2, 0xc6, 0xbb, 0x2e, 0xca, 0x95, 0xc7, 0xe0, 0xc6, 0x8b,
-	0xf1, 0x1a, 0x70, 0x03, 0xed, 0xae, 0x13, 0xff, 0xb4, 0x58, 0x69, 0xc5, 0x6d, 0x67, 0x3c, 0xfb,
-	0xcd, 0x37, 0xdf, 0xcc, 0x8e, 0x61, 0xeb, 0xd4, 0x75, 0x27, 0x5e, 0xc8, 0x2f, 0x68, 0x70, 0xe3,
-	0x3a, 0xd4, 0xf2, 0x03, 0x26, 0x18, 0x36, 0x1c, 0x36, 0xb5, 0xc6, 0xae, 0xb8, 0x0e, 0x07, 0xd6,
-	0x80, 0xbb, 0x43, 0x1a, 0xfa, 0x96, 0xa7, 0x03, 0x8d, 0x67, 0x63, 0xc6, 0xc6, 0x1e, 0xdd, 0x57,
-	0x91, 0x83, 0x70, 0xb4, 0x2f, 0xdc, 0x29, 0xe5, 0xc2, 0x9e, 0xfa, 0xfa, 0xb2, 0xf1, 0x24, 0x1b,
-	0x40, 0xa7, 0xbe, 0x98, 0xeb, 0x8f, 0xe6, 0x47, 0x68, 0x9c, 0x87, 0x03, 0xcf, 0xe5, 0xd7, 0x84,
-	0x7e, 0x09, 0x29, 0x17, 0x78, 0x0b, 0xca, 0x82, 0xf9, 0xae, 0xd3, 0x42, 0x3b, 0xa8, 0x5d, 0x23,
-	0xda, 0xc0, 0x9b, 0x50, 0x9a, 0xd0, 0x79, 0xab, 0xb8, 0x83, 0xda, 0x75, 0x22, 0x8f, 0x32, 0xee,
-	0xc6, 0xf6, 0x42, 0xda, 0x2a, 0x29, 0x9f, 0x36, 0xcc, 0x2b, 0xa8, 0x2f, 0xf1, 0x7c, 0x6f, 0x8e,
-	0x9f, 0x42, 0xcd, 0xb7, 0x03, 0xe1, 0x0a, 0x97, 0xcd, 0x14, 0xe2, 0x23, 0x12, 0x3b, 0xf0, 0x36,
-	0x54, 0xd8, 0x68, 0xc4, 0xa9, 0x50, 0xc0, 0x6b, 0x24, 0xb2, 0x62, 0x0e, 0xa5, 0x04, 0x07, 0xf3,
-	0x17, 0x82, 0xcd, 0x8b, 0x70, 0xc0, 0x9d, 0xc0, 0x1d, 0xd0, 0x7c, 0xba, 0x5b, 0x50, 0x1e, 0x07,
-	0x2c, 0xf4, 0x15, 0x6e, 0x8d, 0x68, 0x03, 0x9b, 0x50, 0x57, 0x87, 0x4f, 0x34, 0xe0, 0x92, 0xcf,
-	0x9a, 0xe2, 0x93, 0xf2, 0xe1, 0x11, 0x34, 0xed, 0x50, 0xb0, 0x33, 0x45, 0x84, 0x50, 0xc9, 0x4d,
-	0x92, 0x68, 0x74, 0xde, 0x5a, 0xff, 0x6e, 0x82, 0x95, 0xa5, 0x65, 0x75, 0xd3, 0x18, 0x24, 0x0b,
-	0x6a, 0xee, 0x41, 0x33, 0x13, 0x83, 0xeb, 0xb0, 0xde, 0xeb, 0x92, 0xd3, 0x93, 0xde, 0xc5, 0xe5,
-	0x66, 0x01, 0x03, 0x54, 0x4e, 0xbb, 0x97, 0xf2, 0x8c, 0xcc, 0x3e, 0x40, 0x97, 0x73, 0x77, 0x3c,
-	0x9b, 0xd2, 0x99, 0x90, 0x9a, 0x72, 0xca, 0x25, 0xdb, 0x93, 0x61, 0x54, 0x76, 0xec, 0x48, 0x2b,
-	0x5e, 0xcc, 0x28, 0x6e, 0x3a, 0xd0, 0x48, 0x70, 0x95, 0x1d, 0xea, 0x03, 0xd8, 0x4b, 0x6c, 0x05,
-	0xb7, 0xd1, 0x79, 0x91, 0x57, 0x6b, 0xcc, 0xa4, 0x5f, 0x20, 0x89, 0xbb, 0x47, 0x55, 0x28, 0x07,
-	0x12, 0xd2, 0xfc, 0x89, 0x00, 0xba, 0xce, 0x64, 0xd1, 0xa2, 0xf7, 0x0f, 0xcf, 0x70, 0x54, 0x6c,
-	0xa1, 0x64, 0x8e, 0xbb, 0x27, 0x23, 0x6e, 0xf7, 0x5a, 0x5e, 0xbb, 0xcb, 0x77, 0xb4, 0x3b, 0xa5,
-	0x56, 0x65, 0xc5, 0xf9, 0x34, 0xbf, 0x21, 0x68, 0x10, 0xea, 0x50, 0xf7, 0x66, 0x39, 0x87, 0xef,
-	0x1e, 0x5e, 0x64, 0xaa, 0xc0, 0x36, 0x34, 0x3d, 0x9b, 0x8b, 0x0f, 0x33, 0xf6, 0x75, 0x76, 0x96,
-	0xcc, 0x9d, 0x75, 0x9b, 0x7f, 0x10, 0xd4, 0x97, 0x24, 0x64, 0x27, 0x4f, 0xa0, 0x12, 0x50, 0x87,
-	0x05, 0xc3, 0x28, 0xfd, 0x7e, 0x5e, 0xfa, 0xe4, 0x4d, 0x69, 0xb0, 0x60, 0xd8, 0x2f, 0x90, 0x08,
-	0xc0, 0xf8, 0x8e, 0xa0, 0xa2, 0x9d, 0x09, 0x0d, 0x50, 0xea, 0x8d, 0xae, 0xb8, 0x11, 0xf0, 0x01,
-	0xd4, 0x96, 0x1b, 0x49, 0xf5, 0x67, 0xa3, 0x63, 0x58, 0x7a, 0x25, 0x59, 0x8b, 0x95, 0x64, 0x5d,
-	0x2e, 0x22, 0x48, 0x1c, 0x2c, 0x33, 0xcb, 0x79, 0xb2, 0xe7, 0xaa, 0x73, 0xeb, 0x24, 0xb2, 0xe2,
-	0x39, 0x73, 0xe0, 0xf1, 0x31, 0x15, 0x5a, 0x0e, 0xfe, 0x3f, 0x16, 0x42, 0xe9, 0xf6, 0x84, 0x98,
-	0x3f, 0x10, 0x34, 0x93, 0x59, 0xa4, 0xd2, 0x04, 0xaa, 0x5a, 0x05, 0xde, 0x42, 0x3b, 0xa5, 0xf6,
-	0x46, 0xe7, 0x20, 0x4f, 0xea, 0xcc, 0x6d, 0x2b, 0x32, 0x7a, 0x33, 0x11, 0xcc, 0xc9, 0x02, 0xc8,
-	0x38, 0x84, 0x7a, 0xf2, 0xc3, 0x42, 0x5f, 0xbd, 0x33, 0xd3, 0xfa, 0xea, 0x81, 0xd0, 0xc6, 0x61,
-	0xf1, 0x00, 0x75, 0x7e, 0x97, 0xa0, 0x91, 0xfe, 0x71, 0x60, 0x1b, 0xaa, 0xd1, 0x22, 0xc6, 0xbb,
-	0x79, 0xe4, 0xd2, 0xdb, 0xdf, 0x68, 0xaf, 0x14, 0x2b, 0xc5, 0x2f, 0x60, 0x17, 0x6a, 0xcb, 0x5d,
-	0x82, 0x5f, 0xde, 0x67, 0x3d, 0x1a, 0xbb, 0x2b, 0x46, 0xab, 0x44, 0xaf, 0x11, 0x76, 0xa0, 0x1a,
-	0x0d, 0x6c, 0x7e, 0x35, 0xe9, 0x47, 0x99, 0x5f, 0x4d, 0xf2, 0x05, 0xa8, 0x24, 0xc7, 0x50, 0xea,
-	0x3a, 0x13, 0x9c, 0xff, 0x6a, 0x97, 0x6b, 0xcd, 0xd8, 0xbe, 0x35, 0xc5, 0x3d, 0xf9, 0x63, 0x35,
-	0x0b, 0xf8, 0x33, 0x40, 0xdc, 0x73, 0xfc, 0x6a, 0xd5, 0xd9, 0xd0, 0xb0, 0x7b, 0xf7, 0x18, 0x25,
-	0xb3, 0x70, 0xd4, 0x81, 0xe7, 0x39, 0xf1, 0x8a, 0x9a, 0xc3, 0xbc, 0x3e, 0x3a, 0x47, 0x57, 0xd5,
-	0xc8, 0x3b, 0xa8, 0x28, 0xf7, 0x9b, 0xbf, 0x01, 0x00, 0x00, 0xff, 0xff, 0xfc, 0xbb, 0x17, 0x0d,
-	0x6d, 0x08, 0x00, 0x00,
+	// 1027 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xac, 0x56, 0xdd, 0x6e, 0xe3, 0x44,
+	0x14, 0xce, 0xe4, 0xaf, 0xdb, 0x53, 0x37, 0x6d, 0x46, 0xd1, 0x2a, 0x32, 0x20, 0x2a, 0xaf, 0x84,
+	0xa2, 0xee, 0xe2, 0xae, 0xc2, 0x4d, 0xb5, 0x8b, 0x90, 0x52, 0x94, 0x6d, 0xc2, 0x46, 0xa5, 0x9a,
+	0x76, 0x57, 0x62, 0x6f, 0x2c, 0xc7, 0x9e, 0xa6, 0x26, 0x4e, 0x6c, 0xec, 0x71, 0x50, 0x5e, 0x80,
+	0x87, 0xe0, 0x02, 0x89, 0x2b, 0x2e, 0x78, 0x0c, 0x5e, 0x80, 0x37, 0xe0, 0x09, 0x78, 0x01, 0xae,
+	0xd0, 0xfc, 0x24, 0xb1, 0x93, 0xc5, 0x24, 0xab, 0xde, 0xcd, 0x9c, 0x39, 0xf3, 0x9d, 0xef, 0x9c,
+	0xf9, 0xe6, 0xcc, 0x40, 0x63, 0xe0, 0x79, 0x63, 0x3f, 0x89, 0x6f, 0x68, 0x34, 0xf3, 0x1c, 0x6a,
+	0x86, 0x51, 0xc0, 0x02, 0xac, 0x3b, 0xc1, 0xc4, 0x1c, 0x79, 0xec, 0x3e, 0x19, 0x9a, 0xc3, 0xd8,
+	0x73, 0x69, 0x12, 0x9a, 0xbe, 0x74, 0xd4, 0x3f, 0x1d, 0x05, 0xc1, 0xc8, 0xa7, 0x67, 0xc2, 0x73,
+	0x98, 0xdc, 0x9d, 0x31, 0x6f, 0x42, 0x63, 0x66, 0x4f, 0x42, 0xb9, 0x59, 0xff, 0x68, 0xdd, 0x81,
+	0x4e, 0x42, 0x36, 0x97, 0x8b, 0xc6, 0x2f, 0x08, 0x34, 0x15, 0xb2, 0x3b, 0xa3, 0x53, 0x86, 0x6b,
+	0x50, 0xf4, 0xdc, 0x26, 0x3a, 0x41, 0xad, 0x7d, 0x52, 0xf4, 0x5c, 0x8c, 0xa1, 0xcc, 0xe6, 0x21,
+	0x6d, 0x16, 0x85, 0x45, 0x8c, 0xf1, 0x63, 0xa8, 0xc6, 0x41, 0x12, 0x39, 0xb4, 0x59, 0x12, 0x56,
+	0x35, 0x13, 0xbe, 0xde, 0x84, 0x36, 0x2b, 0xca, 0xd7, 0x9b, 0x50, 0x7c, 0x0a, 0x75, 0xd7, 0x66,
+	0xb6, 0xe5, 0x04, 0x53, 0x46, 0xa7, 0xcc, 0x12, 0x60, 0xae, 0x70, 0x38, 0xe2, 0x0b, 0x5f, 0x4b,
+	0xfb, 0x2d, 0xc7, 0xc5, 0x50, 0xe6, 0xa6, 0x26, 0x3d, 0x41, 0x2d, 0x8d, 0x88, 0xb1, 0xf1, 0x3b,
+	0x82, 0xda, 0x75, 0x32, 0xf4, 0xbd, 0xf8, 0x9e, 0xd0, 0x1f, 0x12, 0x1a, 0x33, 0xdc, 0x80, 0x0a,
+	0x0b, 0x42, 0xcf, 0x51, 0x2c, 0xe5, 0x04, 0x1f, 0x43, 0x69, 0x4c, 0xe7, 0x82, 0xa7, 0x46, 0xf8,
+	0x10, 0x37, 0xa1, 0x32, 0xb3, 0xfd, 0x44, 0xb2, 0xd4, 0x2e, 0x8a, 0x4d, 0x44, 0xa4, 0x01, 0x5f,
+	0x81, 0xe6, 0xa7, 0x92, 0x6e, 0x96, 0x4f, 0x50, 0xeb, 0xa0, 0xdd, 0x32, 0xff, 0xbb, 0xcc, 0x66,
+	0xba, 0x48, 0xbd, 0x02, 0xc9, 0xec, 0xbf, 0xd8, 0x83, 0x0a, 0xe5, 0x03, 0xe3, 0x1d, 0x68, 0x4b,
+	0xb2, 0xa1, 0x3f, 0xc7, 0x1f, 0xc3, 0x7e, 0x68, 0x47, 0xcc, 0x63, 0x5e, 0x30, 0x15, 0x74, 0x0f,
+	0xc9, 0xca, 0xc0, 0xeb, 0x18, 0xdc, 0xdd, 0xc5, 0x94, 0x09, 0xd6, 0x65, 0xa2, 0x66, 0xab, 0x04,
+	0x4b, 0xa9, 0x04, 0x8d, 0x7f, 0x10, 0x1c, 0xdf, 0x24, 0xc3, 0xd8, 0x89, 0xbc, 0x21, 0xcd, 0xaf,
+	0x45, 0x03, 0x2a, 0xa3, 0x28, 0x48, 0x42, 0x75, 0x6a, 0x72, 0x82, 0x9f, 0xc0, 0xa1, 0x18, 0x58,
+	0x33, 0x1a, 0xc5, 0x9c, 0x50, 0x59, 0x10, 0xd2, 0x84, 0xf1, 0xad, 0xb4, 0xe1, 0x7b, 0xa8, 0xdb,
+	0x09, 0x0b, 0x2c, 0x49, 0xc5, 0x8a, 0x28, 0xa7, 0xc7, 0x79, 0xd4, 0xda, 0x5f, 0xe6, 0xd5, 0x67,
+	0x9d, 0x99, 0xd9, 0x49, 0x58, 0xf0, 0xad, 0x00, 0x21, 0x1c, 0x83, 0x1c, 0xd9, 0x59, 0x83, 0xf1,
+	0x14, 0x8e, 0xd6, 0x7c, 0xb0, 0x06, 0x8f, 0xba, 0x1d, 0x32, 0xe8, 0x77, 0x6f, 0x6e, 0x8f, 0x0b,
+	0x18, 0xa0, 0x3a, 0xe8, 0xdc, 0xf2, 0x31, 0x32, 0xfa, 0x00, 0x9d, 0x38, 0xf6, 0x46, 0xd3, 0x09,
+	0x17, 0xe9, 0x27, 0x00, 0x31, 0x8d, 0x39, 0x5f, 0x6b, 0x29, 0xd6, 0x7d, 0x65, 0xe9, 0xbb, 0xd9,
+	0xaa, 0x17, 0xd7, 0xaa, 0x6e, 0x38, 0x50, 0x4b, 0x91, 0xe5, 0xa7, 0xd4, 0x03, 0xb0, 0x97, 0xe0,
+	0x02, 0xee, 0xa0, 0xfd, 0x59, 0x5e, 0xb2, 0x2b, 0x2a, 0xbd, 0x02, 0x49, 0xed, 0xe5, 0x42, 0x88,
+	0x38, 0xa4, 0xf1, 0x17, 0x02, 0xe8, 0x38, 0xe3, 0xc5, 0x31, 0x7d, 0xf3, 0xe1, 0x11, 0x84, 0x6e,
+	0x53, 0xbb, 0xdf, 0xaf, 0x8e, 0xd5, 0x91, 0x97, 0x73, 0x8f, 0xbc, 0xf2, 0x9e, 0x23, 0xcf, 0x94,
+	0xab, 0xba, 0xa5, 0x48, 0x8d, 0x9f, 0x8a, 0x50, 0x23, 0xd4, 0xa1, 0xde, 0x6c, 0x29, 0xc6, 0x57,
+	0x1f, 0x9e, 0x65, 0x26, 0xc3, 0x53, 0xa8, 0xfb, 0x76, 0xcc, 0xac, 0xf1, 0x34, 0xf8, 0x71, 0x6a,
+	0x65, 0xa2, 0x1f, 0xf1, 0x85, 0xd7, 0xdc, 0x2e, 0x75, 0x83, 0xaf, 0xa1, 0x7a, 0x17, 0x44, 0x13,
+	0x7b, 0x21, 0xd2, 0xf3, 0xbc, 0x78, 0x59, 0xbe, 0xa6, 0xea, 0x3d, 0xaf, 0xc4, 0x7e, 0xa2, 0x70,
+	0x0c, 0x13, 0x0e, 0x33, 0x0b, 0x5c, 0x87, 0x17, 0xfd, 0xab, 0x0e, 0xf9, 0xee, 0xb8, 0x80, 0xeb,
+	0x70, 0x38, 0xe8, 0xf7, 0x5f, 0x0f, 0xde, 0xdc, 0x58, 0xdd, 0xb7, 0xdd, 0x2b, 0x2e, 0xcd, 0x3f,
+	0xca, 0xa0, 0x2d, 0x81, 0xb9, 0x9c, 0xfa, 0x50, 0x8d, 0xa8, 0x13, 0x44, 0xae, 0x2a, 0xc1, 0xd9,
+	0x56, 0x94, 0x42, 0x7f, 0xce, 0x27, 0x41, 0xe4, 0xf6, 0x0a, 0x44, 0x01, 0xe0, 0x00, 0x1a, 0xca,
+	0xd1, 0x12, 0x0d, 0xc6, 0x52, 0xc0, 0x45, 0x01, 0xfc, 0x72, 0x6b, 0xe0, 0x74, 0xf7, 0x5a, 0x06,
+	0xc1, 0xfe, 0x86, 0x55, 0xff, 0x19, 0x41, 0x55, 0x0e, 0x53, 0x07, 0x8f, 0x32, 0xdd, 0x69, 0xb3,
+	0xd1, 0x36, 0x32, 0x8d, 0x76, 0xd1, 0x64, 0xcf, 0x61, 0x7f, 0xf9, 0x14, 0xa9, 0x0e, 0xab, 0x9b,
+	0xf2, 0x2d, 0x32, 0x17, 0x6f, 0x91, 0x79, 0xbb, 0xf0, 0x20, 0x2b, 0x67, 0x1e, 0x99, 0xdf, 0x22,
+	0x7b, 0x2e, 0xe4, 0xfa, 0x88, 0xa8, 0x99, 0xfe, 0x27, 0x02, 0xbc, 0x99, 0xc9, 0x0e, 0x44, 0xbf,
+	0x52, 0x7d, 0x5a, 0x10, 0xdd, 0xa1, 0xe1, 0x13, 0xb9, 0xed, 0xe1, 0x53, 0x5a, 0x35, 0x0c, 0x17,
+	0xea, 0x97, 0x94, 0x49, 0x51, 0xc7, 0x0f, 0xd2, 0xdd, 0x4b, 0x9b, 0x57, 0xdd, 0xf8, 0x15, 0xc1,
+	0x51, 0x3a, 0x0c, 0x97, 0x2b, 0x81, 0x3d, 0x59, 0xb0, 0xb8, 0x89, 0x4e, 0x4a, 0xad, 0x83, 0xfc,
+	0x2b, 0xb4, 0xb6, 0xdb, 0x54, 0x93, 0xee, 0x94, 0x45, 0x73, 0xb2, 0x00, 0xd2, 0x5f, 0x80, 0x96,
+	0x5e, 0x58, 0x1c, 0x85, 0x7c, 0x01, 0xb3, 0x9a, 0x91, 0xf7, 0x5a, 0x4e, 0x5e, 0x14, 0xcf, 0x91,
+	0xf1, 0x0c, 0x1a, 0x97, 0x94, 0x75, 0xa7, 0xee, 0x36, 0xc5, 0x30, 0x7e, 0x43, 0x80, 0xd7, 0xdc,
+	0x79, 0x52, 0x6f, 0xd6, 0x93, 0x7a, 0xf9, 0x3f, 0x49, 0xad, 0x01, 0x3c, 0x7c, 0x5e, 0xed, 0xbf,
+	0xcb, 0x50, 0xcb, 0xfe, 0xee, 0xb0, 0x0d, 0x7b, 0xea, 0xbb, 0x80, 0x4f, 0xf3, 0xf8, 0x65, 0x3f,
+	0x40, 0x7a, 0x6b, 0x2b, 0x5f, 0xae, 0xaa, 0x02, 0xf6, 0x60, 0x7f, 0xf9, 0xda, 0xe1, 0x67, 0xbb,
+	0xbc, 0xe0, 0xfa, 0xe9, 0x96, 0xde, 0x22, 0xd0, 0x73, 0x84, 0x1d, 0xd8, 0x53, 0x4d, 0x27, 0x3f,
+	0x9b, 0x6c, 0x17, 0xce, 0xcf, 0x26, 0xdd, 0xc5, 0x44, 0x90, 0x4b, 0x28, 0x75, 0x9c, 0x31, 0xce,
+	0x7f, 0x56, 0x96, 0x0f, 0xaf, 0xfe, 0x78, 0xe3, 0x7a, 0x76, 0xf9, 0xef, 0xd7, 0x28, 0xe0, 0xef,
+	0x01, 0x56, 0x5a, 0xc6, 0x9f, 0x6f, 0xab, 0x79, 0x09, 0xfb, 0x74, 0x87, 0x2b, 0x62, 0x14, 0x70,
+	0x0c, 0x87, 0x19, 0x89, 0xe1, 0xe7, 0x3b, 0xa8, 0x51, 0x46, 0x34, 0x77, 0xd3, 0xaf, 0x51, 0xb8,
+	0x68, 0xc3, 0x93, 0x9c, 0x2d, 0xa2, 0x1e, 0x4e, 0xe0, 0xf7, 0xd0, 0x35, 0x7a, 0xb7, 0xa7, 0xac,
+	0xc3, 0xaa, 0x30, 0x7f, 0xf1, 0x6f, 0x00, 0x00, 0x00, 0xff, 0xff, 0x23, 0x12, 0x75, 0xac, 0x87,
+	0x0c, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -777,6 +1117,7 @@ type LiiklusServiceClient interface {
 	Receive(ctx context.Context, in *ReceiveRequest, opts ...grpc.CallOption) (LiiklusService_ReceiveClient, error)
 	Ack(ctx context.Context, in *AckRequest, opts ...grpc.CallOption) (*empty.Empty, error)
 	GetOffsets(ctx context.Context, in *GetOffsetsRequest, opts ...grpc.CallOption) (*GetOffsetsReply, error)
+	GetEndOffsets(ctx context.Context, in *GetEndOffsetsRequest, opts ...grpc.CallOption) (*GetEndOffsetsReply, error)
 }
 
 type liiklusServiceClient struct {
@@ -878,6 +1219,15 @@ func (c *liiklusServiceClient) GetOffsets(ctx context.Context, in *GetOffsetsReq
 	return out, nil
 }
 
+func (c *liiklusServiceClient) GetEndOffsets(ctx context.Context, in *GetEndOffsetsRequest, opts ...grpc.CallOption) (*GetEndOffsetsReply, error) {
+	out := new(GetEndOffsetsReply)
+	err := c.cc.Invoke(ctx, "/com.github.bsideup.liiklus.LiiklusService/GetEndOffsets", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // LiiklusServiceServer is the server API for LiiklusService service.
 type LiiklusServiceServer interface {
 	Publish(context.Context, *PublishRequest) (*PublishReply, error)
@@ -885,6 +1235,7 @@ type LiiklusServiceServer interface {
 	Receive(*ReceiveRequest, LiiklusService_ReceiveServer) error
 	Ack(context.Context, *AckRequest) (*empty.Empty, error)
 	GetOffsets(context.Context, *GetOffsetsRequest) (*GetOffsetsReply, error)
+	GetEndOffsets(context.Context, *GetEndOffsetsRequest) (*GetEndOffsetsReply, error)
 }
 
 func RegisterLiiklusServiceServer(s *grpc.Server, srv LiiklusServiceServer) {
@@ -987,6 +1338,24 @@ func _LiiklusService_GetOffsets_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
+func _LiiklusService_GetEndOffsets_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetEndOffsetsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(LiiklusServiceServer).GetEndOffsets(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/com.github.bsideup.liiklus.LiiklusService/GetEndOffsets",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(LiiklusServiceServer).GetEndOffsets(ctx, req.(*GetEndOffsetsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _LiiklusService_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "com.github.bsideup.liiklus.LiiklusService",
 	HandlerType: (*LiiklusServiceServer)(nil),
@@ -1002,6 +1371,10 @@ var _LiiklusService_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetOffsets",
 			Handler:    _LiiklusService_GetOffsets_Handler,
+		},
+		{
+			MethodName: "GetEndOffsets",
+			Handler:    _LiiklusService_GetEndOffsets_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

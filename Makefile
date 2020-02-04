@@ -10,10 +10,10 @@ compile: fmt vet pkg/serialization/riff-serialization.pb.go pkg/liiklus/LiiklusS
 	go build .
 
 pkg/serialization/riff-serialization.pb.go: riff-serialization.proto
-	protoc -I . riff-serialization.proto --go_out=plugins=grpc:serialization
+	protoc -I . riff-serialization.proto --go_out=plugins=grpc:pkg/serialization
 
 pkg/liiklus/LiiklusService.pb.go: LiiklusService.proto
-	protoc -I . LiiklusService.proto --go_out=plugins=grpc:liiklus
+	protoc -I . LiiklusService.proto --go_out=plugins=grpc:pkg/liiklus
 
 .PHONY: test
 test: fmt vet ## Run tests
