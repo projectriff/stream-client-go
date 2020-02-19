@@ -83,7 +83,7 @@ func (lc *StreamClient) Publish(ctx context.Context, payload io.Reader, key io.R
 		return PublishResult{}, fmt.Errorf("contentType %q not compatible with expected contentType %q", contentType, lc.acceptableContentType)
 	}
 
-	ce := liiklus.LiiklusEvent{}
+	ce := liiklus.LiiklusEvent{Extensions:make(map[string]string, len(headers))}
 	ce.DataContentType = contentType
 	ce.Source = "source-todo" // TODO
 	ce.Type = "riff-event"    // TODO
@@ -94,7 +94,9 @@ func (lc *StreamClient) Publish(ctx context.Context, payload io.Reader, key io.R
 	} else {
 		ce.Data = bytes
 	}
-	// TODO headers as CE.extensions
+	for k, v := range headers {
+		ce.Extensions[k] = v
+	}
 
 	var err error
 	var kValue []byte
