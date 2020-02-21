@@ -7,23 +7,9 @@ on:
     - '!dependabot/**'
   pull_request: {}
 
-env:
-  FATS_DIR: fats
-  FATS_REPO: projectriff/fats
-  FATS_REFSPEC: fa0d71d66ad163346f3ad20d7ab55784d6a11b20 # master as of 2020-01-30
-
 jobs:
-
-  unit:
-    name: Unit test
-    strategy:
-      matrix:
-        os:
-        - ubuntu-latest
-        - macos-latest
-        - windows-latest
-      fail-fast: false
-    runs-on: ${{ matrix.os }}
+  test:
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
     - uses: actions/setup-go@v1
@@ -35,56 +21,23 @@ jobs:
         echo "##[set-env name=GOPATH;]$(go env GOPATH)"
         echo "##[add-path]$(go env GOPATH)/bin"
       shell: bash
-    - name: Build
-      run: make
-
-  integration:
-    name: Integration testing
-    needs: unit
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        gateway:
-        - inmemory
-        - kafka
-        # TODO add pulsar tests
-        # - pulsar
-      fail-fast: false
-    steps:
-      - uses: actions/checkout@v1
-      - uses: actions/setup-go@v1
-        with:
-          go-version: '1.13'
-      - name: 'Fetch FATS'
-        run: .github/workflows/fats-fetch.sh ${FATS_DIR} ${FATS_REFSPEC} ${FATS_REPO}
-        timeout-minutes: 1
-      - name: 'Install tools'
-        run: |
-          ${FATS_DIR}/install.sh kubectl
-          ${FATS_DIR}/install.sh kind
-          ${FATS_DIR}/install.sh riff
-          ${FATS_DIR}/install.sh kapp
-        timeout-minutes: 5
-      - name: 'setup env'
-        run: |
-          job=$(date +%s) # TODO can use something that is assigned by CI to guarantee uniqueness
-          echo "JOB_ID=${job}"
-          echo "##[set-env name=CLUSTER]kind"
-          echo "##[set-env name=REGISTRY]docker-daemon"
-          echo "##[set-env name=CLUSTER_NAME]fats-${job}-kind"
-          echo "##[set-env name=NAMESPACE]stream-client-${job}-kind"
-          echo "##[set-env name=GATEWAY]${{ matrix.gateway }}"
-      - name: Setup cluster
-        run: .github/workflows/setup-cluster.sh
-      - name: 'run integration test'
-        run: go test ./... -timeout 30s
-      - name: Collect diagnostics
-        run: ${FATS_DIR}/diagnostics.sh
-        shell: bash
-        if: always()
-        timeout-minutes: 1
-      - name: Cleanup cluster
-        run: .github/workflows/cleanup-cluster.sh
-        shell: bash
-        if: always()
-        timeout-minutes: 10
+    - name: Start liiklus
+      run: |
+        docker run --name liiklus \
+          --rm --detach \
+          -p 6565:6565/tcp \
+          -e storage_positions_type=MEMORY \
+          -e storage_records_type=MEMORY \
+          bsideup/liiklus:0.9.2
+      shell: bash
+    - name: Test
+      run: make test
+    - name: Stop liiklus
+      run: |
+        docker stop liiklus
+      shell: bash
+    - name: Report coverage
+      run: curl -s https://codecov.io/bash | bash -s
+      shell: bash
+      env:
+        CODECOV_TOKEN: f9727f0e-d03f-4bde-8836-781574f4b4a2
