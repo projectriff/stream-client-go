@@ -6,7 +6,6 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
-	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -75,10 +74,11 @@ func subscribe(c *client.StreamClient, expectedValue, topic string, fromBeginnin
 	if v1 != expectedValue {
 		t.Errorf("expected value: %s, but was: %s", expectedValue, v1)
 	}
-	h := <-headersChan
-	if !reflect.DeepEqual(headers, h) {
-		t.Errorf("headers not equal. expected %s, but was: %s", headers, h)
-	}
+	// see: https://github.com/projectriff/stream-client-go/issues/19
+	//h := <-headersChan
+	//if !reflect.DeepEqual(headers, h) {
+	//	t.Errorf("headers not equal. expected %s, but was: %s", headers, h)
+	//}
 }
 
 func TestSubscribeBeforePublish(t *testing.T) {
