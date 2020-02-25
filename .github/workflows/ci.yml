@@ -28,7 +28,7 @@ jobs:
           -p 6565:6565/tcp \
           -e storage_positions_type=MEMORY \
           -e storage_records_type=MEMORY \
-          bsideup/liiklus:0.9.2
+          sbawaska/liiklus:20200223160346-a85402e4332c51d9
       shell: bash
     - name: Test
       run: make test
