@@ -6,14 +6,11 @@ GOBIN=$(shell go env GOBIN)
 endif
 
 .PHONY: compile
-compile: fmt vet pkg/serialization/riff-serialization.pb.go pkg/liiklus/LiiklusService.pb.go ## Compile target binaries
+compile: fmt vet pkg/liiklus/LiiklusService.pb.go ## Compile target binaries
 	go build .
 
-pkg/serialization/riff-serialization.pb.go: riff-serialization.proto
-	protoc -I . riff-serialization.proto --go_out=plugins=grpc:serialization
-
 pkg/liiklus/LiiklusService.pb.go: LiiklusService.proto
-	protoc -I . LiiklusService.proto --go_out=plugins=grpc:liiklus
+	protoc -I . LiiklusService.proto --go_out=plugins=grpc:pkg/liiklus
 
 .PHONY: test
 test: fmt vet ## Run tests
@@ -32,8 +29,7 @@ vet:
 # find or download goimports, download goimports if necessary
 goimports:
 ifeq (, $(shell which goimports))
-	# avoid go.* mutations from go get
-	cp go.mod go.mod~ && cp go.sum go.sum~
+	cp go.mod go.mod~ && cp go.sum go.sum~ # avoid go.* mutations from go get
 	go get golang.org/x/tools/cmd/goimports@release-branch.go1.13
 	mv go.mod~ go.mod && mv go.sum~ go.sum
 GOIMPORTS=$(GOBIN)/goimports
