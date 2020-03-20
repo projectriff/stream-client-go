@@ -1,13 +1,27 @@
+ifeq ($(OS),Windows_NT)
+PUBLISHER_BIN_PATH=./stream-publish.exe
+else
+PUBLISHER_BIN_PATH=./stream-publish
+endif
+
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
 GOBIN=$(shell go env GOPATH)/bin
 else
 GOBIN=$(shell go env GOBIN)
 endif
+GO_SOURCES = $(shell find . -type f -name '*.go')
 
 .PHONY: compile
 compile: fmt vet pkg/liiklus/LiiklusService.pb.go ## Compile target binaries
 	go build .
+
+$(PUBLISHER_BIN_PATH): $(GO_SOURCES) ## Compile stream-publish binary
+	go build  -o $(PUBLISHER_BIN_PATH) ./cmd/stream-publish/main.go
+
+.PHONY: clean
+clean:
+	rm -f $(PUBLISHER_BIN_PATH)
 
 pkg/liiklus/LiiklusService.pb.go: LiiklusService.proto
 	protoc -I . LiiklusService.proto --go_out=plugins=grpc:pkg/liiklus
